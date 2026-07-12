@@ -212,6 +212,58 @@ public final class MemoryEngine: MemoryServiceProtocol, @unchecked Sendable {
     public func getPatternNextStep(currentCommand: String, serverId: UUID?, projectId: UUID?) async throws -> String? {
         return getPatternNextStepSync(currentCommand: currentCommand, serverId: serverId, projectId: projectId)
     }
+
+    public func fetchHistory(limit: Int, serverId: UUID?) async throws -> [CommandHistoryEntry] {
+        fetchHistorySync(limit: max(1, min(limit, 500)), serverId: serverId)
+    }
+
+    private func fetchHistorySync(limit: Int, serverId: UUID?) -> [CommandHistoryEntry] {
+        var sql = """
+        SELECT id, command, directory, exit_code, is_success, server_id, project_id, timestamp
+        FROM command_history
+        """
+        if serverId != nil {
+            sql += " WHERE server_id = ?"
+        }
+        sql += " ORDER BY timestamp DESC LIMIT ?;"
+
+        lock.lock()
+        defer { lock.unlock() }
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+
+        var bindIndex: Int32 = 1
+        if let serverId {
+            sqlite3_bind_text(stmt, bindIndex, (serverId.uuidString as NSString).utf8String, -1, nil)
+            bindIndex += 1
+        }
+        sqlite3_bind_int(stmt, bindIndex, Int32(limit))
+
+        var rows: [CommandHistoryEntry] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let id = sqlite3_column_text(stmt, 0).map { String(cString: $0) } ?? UUID().uuidString
+            let command = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? ""
+            let directory = sqlite3_column_text(stmt, 2).map { String(cString: $0) } ?? ""
+            let exitCode = Int(sqlite3_column_int(stmt, 3))
+            let isSuccess = sqlite3_column_int(stmt, 4) == 1
+            let sid = sqlite3_column_text(stmt, 5).map { String(cString: $0) }.flatMap(UUID.init(uuidString:))
+            let pid = sqlite3_column_text(stmt, 6).map { String(cString: $0) }.flatMap(UUID.init(uuidString:))
+            let ts = Date(timeIntervalSince1970: sqlite3_column_double(stmt, 7))
+            rows.append(CommandHistoryEntry(
+                id: id,
+                command: command,
+                directory: directory,
+                exitCode: exitCode,
+                isSuccess: isSuccess,
+                serverId: sid,
+                projectId: pid,
+                timestamp: ts
+            ))
+        }
+        sqlite3_finalize(stmt)
+        return rows
+    }
     
     deinit {
         if let d = db {

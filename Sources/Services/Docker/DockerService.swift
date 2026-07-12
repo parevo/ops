@@ -164,7 +164,6 @@ public final class DockerService: DockerServiceProtocol {
 
     public func inspectContainer(id: String, on server: SSHConnectionInfo) async throws -> String {
         let result = try await request("/containers/\(Self.pathEscape(id))/json", on: server)
-        // Pretty-print if possible
         if let data = try? Self.jsonData(from: result.body, allowEmpty: false),
            let obj = try? JSONSerialization.jsonObject(with: data),
            let pretty = try? JSONSerialization.data(withJSONObject: obj, options: [.prettyPrinted, .sortedKeys]),
@@ -172,6 +171,63 @@ public final class DockerService: DockerServiceProtocol {
             return text
         }
         return result.body
+    }
+
+    public func inspectContainerSummary(id: String, on server: SSHConnectionInfo) async throws -> ContainerInspectSummary {
+        let raw = try await inspectContainer(id: id, on: server)
+        guard let data = raw.data(using: .utf8),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return ContainerInspectSummary(rawJSON: raw)
+        }
+        let config = root["Config"] as? [String: Any] ?? [:]
+        let hostConfig = root["HostConfig"] as? [String: Any] ?? [:]
+        let networkSettings = root["NetworkSettings"] as? [String: Any] ?? [:]
+
+        let env = (config["Env"] as? [String]) ?? []
+        let cmdArr = (config["Cmd"] as? [String]) ?? []
+        let image = (config["Image"] as? String) ?? ""
+        let networkMode = (hostConfig["NetworkMode"] as? String) ?? ""
+        let restart = (hostConfig["RestartPolicy"] as? [String: Any])?["Name"] as? String ?? ""
+        let mem = hostConfig["Memory"] as? Int64 ?? 0
+        let cpu = hostConfig["CpuShares"] as? Int ?? 0
+
+        var mounts: [String] = []
+        if let list = root["Mounts"] as? [[String: Any]] {
+            for m in list {
+                let src = m["Source"] as? String ?? "?"
+                let dst = m["Destination"] as? String ?? "?"
+                let mode = m["Mode"] as? String ?? ""
+                mounts.append("\(src) → \(dst) \(mode)".trimmingCharacters(in: .whitespaces))
+            }
+        }
+
+        var ports: [String] = []
+        if let bindings = networkSettings["Ports"] as? [String: Any] {
+            for (containerPort, value) in bindings.sorted(by: { $0.key < $1.key }) {
+                if let arr = value as? [[String: Any]], !arr.isEmpty {
+                    for b in arr {
+                        let hostIp = b["HostIp"] as? String ?? ""
+                        let hostPort = b["HostPort"] as? String ?? ""
+                        ports.append("\(hostIp.isEmpty ? "*" : hostIp):\(hostPort) → \(containerPort)")
+                    }
+                } else {
+                    ports.append(containerPort)
+                }
+            }
+        }
+
+        return ContainerInspectSummary(
+            env: env,
+            mounts: mounts,
+            ports: ports,
+            cmd: cmdArr.joined(separator: " "),
+            image: image,
+            networkMode: networkMode,
+            restartPolicy: restart,
+            memoryLimit: mem > 0 ? ByteCountFormatter.string(fromByteCount: mem, countStyle: .memory) : "—",
+            cpuShares: cpu > 0 ? "\(cpu)" : "—",
+            rawJSON: raw
+        )
     }
 
     private static func pathEscape(_ value: String) -> String {
@@ -275,6 +331,47 @@ public final class DockerService: DockerServiceProtocol {
         let res = try await ssh.executeCommand("docker compose -p '\(safe)' down", on: server)
         try requireOK(res)
     }
+
+    public func composePs(project: String, on server: SSHConnectionInfo) async throws -> [ComposeServiceInfo] {
+        let safe = project.replacingOccurrences(of: "'", with: "'\\''")
+        let res = try await ssh.executeCommand(
+            "docker compose -p '\(safe)' ps --format json 2>/dev/null || echo '[]'",
+            on: server
+        )
+        try requireOK(res)
+        let payload = res.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        if payload.isEmpty || payload == "[]" { return [] }
+
+        // compose ps --format json may be NDJSON or a JSON array
+        if let data = try? Self.jsonData(from: payload, allowEmpty: false),
+           let list = try? JSONDecoder().decode([APIComposeService].self, from: data) {
+            return list.map(Self.mapComposeService)
+        }
+
+        return payload.split(separator: "\n").compactMap { line in
+            guard let item = try? JSONDecoder().decode(APIComposeService.self, from: Data(line.utf8)) else { return nil }
+            return Self.mapComposeService(item)
+        }
+    }
+
+    public func composeRestart(project: String, service: String, on server: SSHConnectionInfo) async throws {
+        let p = project.replacingOccurrences(of: "'", with: "'\\''")
+        let s = service.replacingOccurrences(of: "'", with: "'\\''")
+        let res = try await ssh.executeCommand("docker compose -p '\(p)' restart '\(s)'", on: server)
+        try requireOK(res)
+    }
+
+    private static func mapComposeService(_ item: APIComposeService) -> ComposeServiceInfo {
+        ComposeServiceInfo(
+            id: item.ID ?? item.Name,
+            name: item.Service ?? item.Name,
+            state: item.State ?? "",
+            status: item.Status ?? "",
+            ports: item.Publishers?.map { pub in
+                "\(pub.publishedPort ?? 0)->\(pub.targetPort)/\(pub.proto ?? "tcp")"
+            }.joined(separator: ", ") ?? ""
+        )
+    }
 }
 
 // MARK: - API DTOs
@@ -336,6 +433,29 @@ private struct APICompose: Decodable {
     let Name: String
     let Status: String?
     let ConfigFiles: String?
+}
+
+private struct APIComposeService: Decodable {
+    let ID: String?
+    let Name: String
+    let Service: String?
+    let State: String?
+    let Status: String?
+    let Publishers: [APIComposePublisher]?
+}
+
+private struct APIComposePublisher: Decodable {
+    let url: String?
+    let targetPort: Int
+    let publishedPort: Int?
+    let proto: String?
+
+    enum CodingKeys: String, CodingKey {
+        case url = "URL"
+        case targetPort = "TargetPort"
+        case publishedPort = "PublishedPort"
+        case proto = "Protocol"
+    }
 }
 
 private struct FlexibleInt: Decodable, CustomStringConvertible {

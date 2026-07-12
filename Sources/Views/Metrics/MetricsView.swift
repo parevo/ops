@@ -91,6 +91,10 @@ struct MetricsView: View {
                                         .font(.caption.monospacedDigit())
                                 }
                             }
+                            Button("Open Alert Center") {
+                                session.navigate(to: .alerts)
+                            }
+                            .buttonStyle(.link)
                         }
                         .padding(.top, 4)
                     }

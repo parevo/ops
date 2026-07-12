@@ -175,23 +175,31 @@ struct ComposeView: View {
     @Query private var servers: [Server]
     @State private var items: [ComposeProjectInfo] = []
     @State private var errorMessage: String?
+    @State private var selected: ComposeProjectInfo?
 
     var body: some View {
-        Table(items) {
+        Table(items, selection: Binding(
+            get: { selected.map { Set([$0.id]) } ?? [] },
+            set: { ids in selected = items.first { ids.contains($0.id) } }
+        )) {
             TableColumn("Name", value: \.name)
             TableColumn("Status", value: \.status)
             TableColumn("Config", value: \.configFiles)
             TableColumn("Actions") { item in
                 HStack {
+                    Button("Details") { selected = item }
                     Button("Up") { Task { await up(item.name) } }
                     Button("Down", role: .destructive) { Task { await down(item.name) } }
                 }
                 .buttonStyle(.borderless)
-            }.width(120)
+            }.width(180)
         }
         .overlay { if let errorMessage { Text(errorMessage).foregroundStyle(BrandColor.danger) } }
         .requiresServer(session.connectionInfo(from: servers) != nil)
         .toolbar { ToolbarItem { Button("Refresh") { Task { await load() } } } }
+        .sheet(item: $selected) { project in
+            ComposeDetailSheet(project: project)
+        }
         .task(id: session.activeServerID) { await load() }
     }
 
@@ -215,6 +223,86 @@ struct ComposeView: View {
     }
 }
 
+struct ComposeDetailSheet: View {
+    let project: ComposeProjectInfo
+    @Environment(AppSession.self) private var session
+    @Query private var servers: [Server]
+    @Environment(\.dismiss) private var dismiss
+    @State private var services: [ComposeServiceInfo] = []
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section(project.name) {
+                    LabeledContent("Status", value: project.status)
+                    LabeledContent("Config", value: project.configFiles)
+                }
+                Section("Services") {
+                    ForEach(services) { svc in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(svc.name).font(.headline)
+                                Text(svc.status).font(.caption).foregroundStyle(BrandColor.textSecondary)
+                                if !svc.ports.isEmpty {
+                                    Text(svc.ports).font(.caption2.monospaced())
+                                }
+                            }
+                            Spacer()
+                            StatusBadge(title: svc.state.uppercased(), tone: svc.isRunning ? .success : .neutral)
+                            Button {
+                                Task { await restart(svc.name) }
+                            } label: { Image(systemName: "arrow.clockwise") }
+                            .buttonStyle(.borderless)
+                            Button {
+                                session.openInteractiveShell(
+                                    command: "docker compose -p \(project.name) logs -f --tail 100 \(svc.name)",
+                                    title: svc.name
+                                )
+                                dismiss()
+                            } label: { Image(systemName: "terminal") }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                }
+                if let errorMessage {
+                    Section { Text(errorMessage).foregroundStyle(BrandColor.danger) }
+                }
+            }
+            .navigationTitle("Stack")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
+                ToolbarItem { Button("Refresh") { Task { await load() } } }
+            }
+        }
+        .frame(minWidth: 560, minHeight: 420)
+        .task { await load() }
+    }
+
+    @MainActor
+    private func load() async {
+        guard let info = session.connectionInfo(from: servers) else { return }
+        do {
+            services = try await DependencyContainer.shared.resolve(DockerServiceProtocol.self)
+                .composePs(project: project.name, on: info)
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func restart(_ service: String) async {
+        guard let info = session.connectionInfo(from: servers) else { return }
+        do {
+            try await DependencyContainer.shared.resolve(DockerServiceProtocol.self)
+                .composeRestart(project: project.name, service: service, on: info)
+            await load()
+        } catch {
+            await MainActor.run { errorMessage = error.localizedDescription }
+        }
+    }
+}
+
 // MARK: - Services / Cron / Files / Logs / Metrics / Deploy / Memory / Settings
 
 struct ServicesView: View {
@@ -231,12 +319,22 @@ struct ServicesView: View {
             TableColumn("Sub", value: \.sub).width(90)
             TableColumn("Description", value: \.description)
             TableColumn("Actions") { s in
-                HStack {
+                HStack(spacing: 6) {
                     Button { Task { await run(.restart, s.unit) } } label: { Image(systemName: "arrow.clockwise") }
+                        .help("Restart")
                     Button { Task { await run(.stop, s.unit) } } label: { Image(systemName: "stop.fill") }
+                        .help("Stop")
                     Button { Task { await run(.start, s.unit) } } label: { Image(systemName: "play.fill") }
+                        .help("Start")
+                    Button {
+                        session.openInteractiveShell(
+                            command: "journalctl -u \(s.unit) -f -n 100 --no-pager",
+                            title: s.unit
+                        )
+                    } label: { Image(systemName: "terminal") }
+                        .help("Open journal in Terminal")
                 }.buttonStyle(.borderless)
-            }.width(100)
+            }.width(130)
         }
         .overlay { if let errorMessage { Text(errorMessage).foregroundStyle(BrandColor.danger) } }
         .requiresServer(session.connectionInfo(from: servers) != nil)
@@ -301,7 +399,10 @@ struct FilesView: View {
     @State private var files: [FileInfo] = []
     @State private var currentPath = "/"
     @State private var preview = ""
+    @State private var openPath: String?
+    @State private var isDirty = false
     @State private var errorMessage: String?
+    @State private var saveMessage: String?
 
     var body: some View {
         HSplitView {
@@ -331,6 +432,11 @@ struct FilesView: View {
                         }
                     }
                     .contextMenu {
+                        if file.isDirectory {
+                            Button("Shell Here") {
+                                session.openInteractiveShell(command: "cd \(file.path) && pwd && ls -la", title: file.name)
+                            }
+                        }
                         Button("Delete", role: .destructive) {
                             Task {
                                 guard let info = session.connectionInfo(from: servers) else { return }
@@ -341,9 +447,33 @@ struct FilesView: View {
                     }
                 }
             }
-            TextEditor(text: .constant(preview))
-                .font(.system(.body, design: .monospaced))
-                .frame(minWidth: 280)
+            VStack(spacing: 0) {
+                HStack {
+                    Text(openPath ?? "No file selected")
+                        .font(.caption.monospaced())
+                        .foregroundStyle(BrandColor.textSecondary)
+                        .lineLimit(1)
+                    Spacer()
+                    if isDirty {
+                        Text("Edited").font(.caption2).foregroundStyle(BrandColor.warning)
+                    }
+                    Button("Save") { Task { await save() } }
+                        .disabled(openPath == nil || !isDirty)
+                        .keyboardShortcut("s", modifiers: [.command])
+                }
+                .padding(.horizontal, BrandSpacing.medium)
+                .padding(.vertical, BrandSpacing.small)
+                .background(.bar)
+                TextEditor(text: $preview)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(minWidth: 280)
+                    .onChange(of: preview) { _, _ in
+                        if openPath != nil { isDirty = true }
+                    }
+                if let saveMessage {
+                    Text(saveMessage).font(.caption).padding(6).foregroundStyle(BrandColor.success)
+                }
+            }
         }
         .overlay(alignment: .top) {
             if let errorMessage { Text(errorMessage).foregroundStyle(BrandColor.danger).padding(8) }
@@ -366,8 +496,27 @@ struct FilesView: View {
     @MainActor
     private func open(_ path: String) async {
         guard let info = session.connectionInfo(from: servers) else { return }
-        do { preview = try await DependencyContainer.shared.resolve(FileServiceProtocol.self).readFile(path: path, on: info) }
-        catch { errorMessage = error.localizedDescription }
+        do {
+            preview = try await DependencyContainer.shared.resolve(FileServiceProtocol.self).readFile(path: path, on: info)
+            openPath = path
+            isDirty = false
+            saveMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    @MainActor
+    private func save() async {
+        guard let path = openPath, let info = session.connectionInfo(from: servers) else { return }
+        do {
+            try await DependencyContainer.shared.resolve(FileServiceProtocol.self).writeFile(path: path, content: preview, on: info)
+            isDirty = false
+            saveMessage = "Saved \(path)"
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func goUp() {
@@ -403,6 +552,18 @@ struct LogsView: View {
                 TextField("Filter", text: $filter).textFieldStyle(.roundedBorder)
                 Button("Reload") { Task { await load() } }
                 Button(streaming ? "Streaming…" : "Stream") { startStream() }.disabled(streaming)
+                Button {
+                    let cmd: String
+                    if source.hasPrefix("unit:") {
+                        let unit = String(source.dropFirst(5))
+                        cmd = "journalctl -u \(unit) -f -n 100 --no-pager"
+                    } else {
+                        cmd = "journalctl -f -n 100 --no-pager"
+                    }
+                    session.openInteractiveShell(command: cmd, title: "journal")
+                } label: {
+                    Label("Terminal", systemImage: "terminal")
+                }
             }
             .padding(BrandSpacing.medium)
             ScrollViewReader { proxy in
@@ -468,17 +629,23 @@ struct DeploymentsView: View {
     @Query private var projects: [Project]
     @State private var selectedProjectID: UUID?
     @State private var events: [DeploymentEvent] = []
-    @State private var log = ""
+    @State private var steps: [DeployStep] = []
+    @State private var rollback = ""
     @State private var errorMessage: String?
+    @State private var isDeploying = false
+
+    private var scopedProjects: [Project] {
+        session.projects(for: projects)
+    }
 
     private var selectedProject: Project? {
-        projects.first { $0.id == selectedProjectID }
+        scopedProjects.first { $0.id == selectedProjectID }
     }
 
     var body: some View {
         HSplitView {
             List(selection: $selectedProjectID) {
-                ForEach(projects) { project in
+                ForEach(scopedProjects) { project in
                     Text(project.name).tag(project.id as UUID?)
                 }
             }
@@ -486,12 +653,34 @@ struct DeploymentsView: View {
             VStack(alignment: .leading, spacing: BrandSpacing.medium) {
                 if let project = selectedProject {
                     HStack {
-                        Button("Deploy Now") { Task { await deploy(project) } }.buttonStyle(.borderedProminent)
+                        Button("Run Pipeline") { Task { await deploy(project) } }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(isDeploying)
+                        Button("Rollback hint") { Task { await loadRollback(project) } }
                         Button("Refresh Timeline") { Task { await loadEvents(project) } }
                     }
+                    if isDeploying { ProgressView("Deploying…") }
                     if let errorMessage { Text(errorMessage).foregroundStyle(BrandColor.danger) }
-                    if !log.isEmpty {
-                        Text(log).font(.caption.monospaced()).textSelection(.enabled)
+                    if !steps.isEmpty {
+                        GroupBox("Pipeline") {
+                            VStack(alignment: .leading, spacing: 8) {
+                                ForEach(steps) { step in
+                                    HStack(alignment: .top) {
+                                        Image(systemName: step.isSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                            .foregroundStyle(step.isSuccess ? BrandColor.success : BrandColor.danger)
+                                        VStack(alignment: .leading) {
+                                            Text(step.title).font(.headline)
+                                            Text(step.detail).font(.caption.monospaced()).textSelection(.enabled)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if !rollback.isEmpty {
+                        GroupBox("Recent commits") {
+                            Text(rollback).font(.caption.monospaced()).textSelection(.enabled)
+                        }
                     }
                     List(events) { event in
                         VStack(alignment: .leading) {
@@ -508,19 +697,36 @@ struct DeploymentsView: View {
         }
         .requiresServer(session.connectionInfo(from: servers) != nil)
         .onChange(of: selectedProjectID) { _, id in
-            if let project = projects.first(where: { $0.id == id }) {
+            if let project = scopedProjects.first(where: { $0.id == id }) {
                 Task { await loadEvents(project) }
             }
+        }
+        .onChange(of: session.activeServerID) { _, _ in
+            selectedProjectID = scopedProjects.first?.id
         }
     }
 
     @MainActor
     private func deploy(_ project: Project) async {
         guard let info = session.connectionInfo(from: servers) else { return }
+        isDeploying = true
+        defer { isDeploying = false }
         do {
-            log = try await DependencyContainer.shared.resolve(DeployServiceProtocol.self).deploy(directory: project.directoryPath, on: info)
+            steps = try await DependencyContainer.shared.resolve(DeployServiceProtocol.self)
+                .deployPipeline(directory: project.directoryPath, on: info)
             await loadEvents(project)
             errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    @MainActor
+    private func loadRollback(_ project: Project) async {
+        guard let info = session.connectionInfo(from: servers) else { return }
+        do {
+            rollback = try await DependencyContainer.shared.resolve(DeployServiceProtocol.self)
+                .rollbackHint(directory: project.directoryPath, on: info)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -530,7 +736,8 @@ struct DeploymentsView: View {
     private func loadEvents(_ project: Project) async {
         guard let info = session.connectionInfo(from: servers) else { return }
         do {
-            events = try await DependencyContainer.shared.resolve(DeployServiceProtocol.self).recentEvents(directory: project.directoryPath, on: info)
+            events = try await DependencyContainer.shared.resolve(DeployServiceProtocol.self)
+                .recentEvents(directory: project.directoryPath, on: info)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -543,31 +750,111 @@ struct MemoryView: View {
     @State private var query = ""
     @State private var suggestions: [String] = []
     @State private var nextStep: String?
+    @State private var history: [CommandHistoryEntry] = []
+
+    private var cleanSuggestions: [String] {
+        Array(Set(suggestions.filter(Self.isUserCommand))).sorted()
+    }
+
+    private var cleanHistory: [CommandHistoryEntry] {
+        history.filter { Self.isUserCommand($0.command) }
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: BrandSpacing.large) {
-            TextField("Partial command", text: $query, prompt: Text("dock, git, systemctl…"))
-                .textFieldStyle(.roundedBorder)
-                .font(.body.monospaced())
-                .onChange(of: query) { _, value in Task { await load(value) } }
-            GroupBox("Suggestions") {
-                if suggestions.isEmpty {
-                    Text("No history matches yet. Commands you run are learned locally in SQLite.")
-                        .foregroundStyle(BrandColor.textMuted)
-                } else {
-                    ForEach(suggestions, id: \.self) { s in
-                        Label(s, systemImage: "sparkles").font(.body.monospaced())
+        ScrollView {
+            VStack(alignment: .leading, spacing: BrandSpacing.large) {
+                TextField("Partial command", text: $query, prompt: Text("dock, git, systemctl…"))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.body.monospaced())
+                    .onChange(of: query) { _, value in Task { await load(value) } }
+
+                GroupBox("Suggestions") {
+                    if cleanSuggestions.isEmpty {
+                        Text("Commands you run on this host are learned locally.")
+                            .foregroundStyle(BrandColor.textMuted)
+                    } else {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(cleanSuggestions.prefix(12), id: \.self) { s in
+                                Button {
+                                    session.openInteractiveShell(command: s, title: "memory")
+                                } label: {
+                                    Label {
+                                        Text(s)
+                                            .font(.body.monospaced())
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                    } icon: {
+                                        Image(systemName: "sparkles")
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+
+                if let nextStep, Self.isUserCommand(nextStep) {
+                    GroupBox("Pattern Next Step") {
+                        HStack {
+                            Text(nextStep)
+                                .font(.body.monospaced())
+                                .lineLimit(2)
+                                .truncationMode(.tail)
+                            Spacer()
+                            Button("Run") {
+                                session.openInteractiveShell(command: nextStep, title: "next")
+                            }
+                        }
+                    }
+                }
+
+                GroupBox("Audit · recent commands") {
+                    if cleanHistory.isEmpty {
+                        Text("No user commands for this host yet.")
+                            .foregroundStyle(BrandColor.textMuted)
+                    } else {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(cleanHistory.prefix(30)) { entry in
+                                HStack(alignment: .top, spacing: BrandSpacing.small) {
+                                    Image(systemName: entry.isSuccess ? "checkmark.circle" : "xmark.circle")
+                                        .foregroundStyle(entry.isSuccess ? BrandColor.success : BrandColor.danger)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(entry.command)
+                                            .font(.caption.monospaced())
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                        Text(entry.timestamp.formatted(date: .abbreviated, time: .shortened))
+                                            .font(.caption2)
+                                            .foregroundStyle(BrandColor.textMuted)
+                                    }
+                                    Spacer(minLength: 0)
+                                    Button("Run") {
+                                        session.openInteractiveShell(command: entry.command, title: "audit")
+                                    }
+                                    .controlSize(.small)
+                                }
+                            }
+                        }
                     }
                 }
             }
-            if let nextStep {
-                GroupBox("Pattern Next Step") {
-                    Text(nextStep).font(.body.monospaced())
-                }
-            }
-            Spacer()
+            .padding(BrandSpacing.large)
         }
-        .padding(BrandSpacing.large)
+        .task(id: session.activeServerID) {
+            await load(query)
+            await loadHistory()
+        }
+    }
+
+    /// Hide metrics scrapers / docker API noise that used to flood this screen.
+    private static func isUserCommand(_ command: String) -> Bool {
+        let c = command.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !c.isEmpty, c.count <= 200, !c.contains("\n") else { return false }
+        if c.contains("===HOST===") || c.contains("===LOAD===") || c.contains("===CPU===") { return false }
+        if c.contains("===MEM===") || c.contains("===DISK===") || c.contains("===DOCKER===") { return false }
+        if c.contains("--unix-socket") || c.contains("/var/run/docker.sock") { return false }
+        if c.contains("__HTTP_STATUS__") { return false }
+        return true
     }
 
     @MainActor
@@ -577,14 +864,91 @@ struct MemoryView: View {
         suggestions = (try? await memory.getSmartSuggestions(input: value, serverId: serverId, projectId: nil)) ?? []
         nextStep = try? await memory.getPatternNextStep(currentCommand: value, serverId: serverId, projectId: nil)
     }
+
+    @MainActor
+    private func loadHistory() async {
+        let memory = DependencyContainer.shared.resolve(MemoryServiceProtocol.self)
+        history = (try? await memory.fetchHistory(limit: 80, serverId: session.activeServerID)) ?? []
+    }
+}
+
+struct TunnelsView: View {
+    @Environment(AppSession.self) private var session
+    @Query private var servers: [Server]
+    @State private var localPort = "18080"
+    @State private var remoteHost = "127.0.0.1"
+    @State private var remotePort = "80"
+    @State private var message: String?
+
+    var body: some View {
+        Form {
+            Section("New local forward") {
+                TextField("Local port", text: $localPort)
+                TextField("Remote host", text: $remoteHost)
+                TextField("Remote port", text: $remotePort)
+                Button("Start Tunnel") { Task { await start() } }
+                    .disabled(session.activeServerID == nil)
+                if let message { Text(message).foregroundStyle(BrandColor.textSecondary) }
+            }
+            Section("Active tunnels") {
+                if session.activeTunnels.isEmpty {
+                    Text("No tunnels").foregroundStyle(BrandColor.textMuted)
+                } else {
+                    ForEach(session.activeTunnels) { tunnel in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(tunnel.label).font(.headline)
+                                Text("\(tunnel.serverName) · localhost:\(tunnel.localPort)")
+                                    .font(.caption)
+                                    .foregroundStyle(BrandColor.textSecondary)
+                            }
+                            Spacer()
+                            Button("Stop", role: .destructive) {
+                                session.removeTunnel(tunnel.id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+
+    @MainActor
+    private func start() async {
+        guard let info = session.connectionInfo(from: servers),
+              let server = session.server(from: servers),
+              let local = Int(localPort),
+              let remote = Int(remotePort) else {
+            message = "Invalid ports or no active server"
+            return
+        }
+        let tunnel = PortTunnel(
+            serverID: server.id,
+            serverName: server.name,
+            localPort: local,
+            remoteHost: remoteHost,
+            remotePort: remote
+        )
+        do {
+            try await DependencyContainer.shared.resolve(PortForwardServiceProtocol.self).startTunnel(tunnel, on: info)
+            session.addTunnel(tunnel)
+            message = "Tunnel up"
+        } catch {
+            message = error.localizedDescription
+        }
+    }
 }
 
 struct SettingsView: View {
     @AppStorage("parevo.autoRefresh") private var autoRefresh = true
     @AppStorage("parevo.refreshInterval") private var refreshInterval = 15.0
     @Environment(AlertMonitor.self) private var alerts
+    @Environment(AppSession.self) private var session
 
     var body: some View {
+        @Bindable var session = session
         Form {
             Section("General") {
                 Toggle("Auto-refresh metrics", isOn: $autoRefresh)
@@ -597,11 +961,59 @@ struct SettingsView: View {
                     }
                 }
             }
+            Section("Terminal") {
+                LabeledContent("Font size") {
+                    HStack {
+                        Slider(value: $session.terminalFontSize, in: 11...22, step: 1)
+                        Text("\(Int(session.terminalFontSize))pt")
+                            .monospacedDigit()
+                            .frame(width: 40, alignment: .trailing)
+                    }
+                }
+                Picker("Theme", selection: $session.terminalTheme) {
+                    Text("System").tag("system")
+                    Text("Dark").tag("dark")
+                    Text("Light").tag("light")
+                }
+                .pickerStyle(.segmented)
+
+                // Live preview so the change is obvious even without a tab open
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Preview")
+                        .font(.caption)
+                        .foregroundStyle(BrandColor.textSecondary)
+                    Text("$ ls -la && echo hello")
+                        .font(.system(size: session.terminalFontSize, weight: .regular, design: .monospaced))
+                        .foregroundStyle(previewForeground)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .background(previewBackground, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(BrandColor.border, lineWidth: 1)
+                        )
+                }
+                .padding(.top, 4)
+
+                Text(session.terminalHosts.debugHostCount == 0
+                     ? "Open a Terminal tab to apply live to SSH sessions."
+                     : "Applied to \(session.terminalHosts.debugHostCount) open session(s).")
+                    .font(.caption2)
+                    .foregroundStyle(BrandColor.textMuted)
+            }
             Section("Alerts & Notifications") {
                 Toggle("Enable alert monitor", isOn: Binding(
                     get: { alerts.isEnabled },
                     set: { alerts.isEnabled = $0 }
                 ))
+                Toggle("Monitor all servers", isOn: Binding(
+                    get: { alerts.monitorAllServers },
+                    set: { alerts.monitorAllServers = $0 }
+                ))
+                LabeledContent("Active", value: "\(alerts.activeAlerts.count)")
+                LabeledContent("History", value: "\(alerts.alertHistory.count)")
+                Button("Clear Alert History") { alerts.clearHistory() }
+                    .disabled(alerts.alertHistory.isEmpty)
                 LabeledContent("CPU ≥") {
                     Slider(value: Binding(
                         get: { alerts.thresholds.cpu },
@@ -654,5 +1066,21 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .padding(BrandSpacing.large)
         .frame(maxWidth: 640, alignment: .leading)
+    }
+
+    private var previewForeground: Color {
+        switch session.terminalTheme {
+        case "dark": return Color(nsColor: NSColor(calibratedWhite: 0.92, alpha: 1))
+        case "light": return Color(nsColor: NSColor(calibratedWhite: 0.12, alpha: 1))
+        default: return BrandColor.textPrimary
+        }
+    }
+
+    private var previewBackground: Color {
+        switch session.terminalTheme {
+        case "dark": return Color(nsColor: NSColor(calibratedWhite: 0.08, alpha: 1))
+        case "light": return Color(nsColor: NSColor(calibratedWhite: 0.98, alpha: 1))
+        default: return BrandColor.consoleBackground
+        }
     }
 }

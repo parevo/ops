@@ -1,34 +1,58 @@
 import SwiftUI
 import SwiftData
 
-struct TerminalPanel: View {
+/// Shared SwiftTerm workspace with tabs + optional split — used as full Terminal page and bottom panel.
+struct TerminalWorkspace: View {
+    var compact: Bool = false
+
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
-    @State private var term = TerminalSession()
-    @FocusState private var focused: Bool
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: BrandSpacing.small) {
-                Label(session.server(from: servers)?.name ?? "No server", systemImage: "terminal")
-                    .font(.caption.weight(.semibold))
-                if term.isRunning {
-                    ProgressView().controlSize(.small)
-                    Text("live").font(.caption2).foregroundStyle(BrandColor.success)
+            tabBar
+            Divider()
+            terminalBody
+        }
+        .onAppear { session.ensureTerminalTab() }
+        .requiresServer(session.activeServerID != nil)
+    }
+
+    private var tabBar: some View {
+        HStack(spacing: 0) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 2) {
+                    ForEach(session.terminalTabs) { tab in
+                        TerminalTabChip(
+                            title: tabTitle(tab),
+                            isSelected: session.selectedTerminalTabID == tab.id,
+                            onSelect: { session.selectedTerminalTabID = tab.id },
+                            onClose: { session.closeTerminalTab(tab.id) }
+                        )
+                    }
                 }
-                Spacer()
-                Text(term.statusLine)
-                    .font(.caption2.monospaced())
-                    .foregroundStyle(BrandColor.textSecondary)
-                Button("Clear") { term.clear() }
-                    .buttonStyle(.borderless)
-                if term.isRunning {
-                    Button("Stop") { term.stop() }
-                        .buttonStyle(.bordered)
-                        .tint(BrandColor.danger)
-                        .keyboardShortcut(.cancelAction)
-                }
+                .padding(.horizontal, BrandSpacing.small)
+            }
+
+            Button {
+                session.toggleSplitTerminal()
+            } label: {
+                Image(systemName: session.splitTerminalEnabled ? "rectangle.split.2x1.fill" : "rectangle.split.2x1")
+            }
+            .buttonStyle(.borderless)
+            .help("Split Terminal")
+            .padding(.trailing, BrandSpacing.tiny)
+
+            Button {
+                session.newTerminalTab()
+            } label: {
+                Image(systemName: "plus")
+            }
+            .buttonStyle(.borderless)
+            .help("New Tab (⌘T)")
+            .padding(.trailing, BrandSpacing.tiny)
+
+            if compact {
                 Button {
                     session.terminalVisible = false
                 } label: {
@@ -37,75 +61,114 @@ struct TerminalPanel: View {
                         .foregroundStyle(BrandColor.textMuted)
                 }
                 .buttonStyle(.plain)
+                .help("Close panel")
+                .padding(.trailing, BrandSpacing.small)
             }
-            .padding(.horizontal, BrandSpacing.medium)
-            .padding(.vertical, BrandSpacing.small)
-            .background(.bar)
-
-            TerminalConsoleView(text: $term.buffer, isDark: colorScheme == .dark)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            if let hint = term.nextHint, !term.isRunning {
-                HStack {
-                    Image(systemName: "arrow.turn.down.right")
-                    Text("Next: \(hint)").font(.caption).lineLimit(1)
-                    Spacer()
-                    Button("Insert") { term.input = hint }
-                        .buttonStyle(.borderless)
-                }
-                .padding(.horizontal, BrandSpacing.medium)
-                .padding(.vertical, 6)
-                .background(BrandColor.surface)
-            }
-
-            HStack(spacing: BrandSpacing.small) {
-                Text("$")
-                    .font(.body.monospaced().weight(.semibold))
-                    .foregroundStyle(BrandColor.success)
-                TextField("Command — docker logs -f streams live · Esc stops", text: $term.input)
-                    .textFieldStyle(.plain)
-                    .font(.body.monospaced())
-                    .focused($focused)
-                    .disabled(session.connectionInfo(from: servers) == nil)
-                    .onSubmit { submit() }
-                if term.isRunning {
-                    Button("Stop", action: term.stop)
-                        .keyboardShortcut("c", modifiers: .control)
-                }
-            }
-            .padding(BrandSpacing.medium)
-            .background(BrandColor.surface)
         }
-        .onAppear {
-            focused = true
-            warmSSH()
-        }
-        .onChange(of: session.activeServerID) { _, _ in
-            warmSSH()
-        }
-        .requiresServer(session.connectionInfo(from: servers) != nil)
+        .frame(height: compact ? 32 : 36)
+        .background(.bar)
     }
 
-    private func submit() {
-        guard let info = session.connectionInfo(from: servers) else {
-            term.buffer += "error: no active server\n"
-            return
+    @ViewBuilder
+    private var terminalBody: some View {
+        if session.terminalTabs.isEmpty {
+            ContentUnavailableView(
+                "No Terminal Tabs",
+                systemImage: "terminal",
+                description: Text("Press ⌘T or the + button to open a shell.")
+            )
+        } else if session.splitTerminalEnabled,
+                  let leftID = session.selectedTerminalTabID,
+                  let rightID = session.splitTerminalTabID,
+                  session.terminalTabs.contains(where: { $0.id == leftID }),
+                  session.terminalTabs.contains(where: { $0.id == rightID }) {
+            HSplitView {
+                pane(for: leftID)
+                pane(for: rightID)
+            }
+        } else if let selected = session.selectedTerminalTabID,
+                  session.terminalTabs.contains(where: { $0.id == selected }) {
+            pane(for: selected)
+        } else {
+            ContentUnavailableView(
+                "Host Unavailable",
+                systemImage: "server.rack",
+                description: Text("The server for this tab is missing.")
+            )
         }
-        term.run(on: info, serverId: session.activeServerID)
-        focused = true
     }
 
-    private func warmSSH() {
-        guard let info = session.connectionInfo(from: servers) else { return }
-        Task {
-            _ = try? await DependencyContainer.shared.resolve(SSHServiceProtocol.self).connect(server: info)
+    @ViewBuilder
+    private func pane(for tabID: UUID) -> some View {
+        if let tab = session.terminalTabs.first(where: { $0.id == tabID }),
+           let info = session.connectionInfo(for: tab, from: servers) {
+            InteractiveSSHTerminalView(
+                tabID: tab.id,
+                server: info,
+                initialCommand: tab.initialCommand,
+                registry: session.terminalHosts
+            )
+            .id(tab.id)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ContentUnavailableView("Unavailable", systemImage: "terminal")
         }
+    }
+
+    private func tabTitle(_ tab: TerminalTab) -> String {
+        let host = servers.first(where: { $0.id == tab.serverID })?.name
+        if let host, host != tab.title {
+            return "\(tab.title) · \(host)"
+        }
+        return tab.title
+    }
+}
+
+private struct TerminalTabChip: View {
+    let title: String
+    let isSelected: Bool
+    let onSelect: () -> Void
+    let onClose: () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Button(action: onSelect) {
+                Text(title)
+                    .font(.caption.weight(isSelected ? .semibold : .regular))
+                    .lineLimit(1)
+            }
+            .buttonStyle(.plain)
+
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(BrandColor.textMuted)
+            }
+            .buttonStyle(.plain)
+            .help("Close Tab")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            isSelected ? BrandColor.surface : Color.clear,
+            in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .strokeBorder(isSelected ? BrandColor.border : Color.clear, lineWidth: 1)
+        )
+    }
+}
+
+struct TerminalPanel: View {
+    var body: some View {
+        TerminalWorkspace(compact: true)
     }
 }
 
 struct TerminalView: View {
     var body: some View {
-        TerminalPanel()
+        TerminalWorkspace(compact: false)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

@@ -2,6 +2,7 @@ import SwiftUI
 
 public enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
     case dashboard = "Dashboard"
+    case alerts = "Alerts"
     case servers = "Servers"
     case projects = "Projects"
     case containers = "Containers"
@@ -16,6 +17,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
     case metrics = "Metrics"
     case deployments = "Deployments"
     case terminal = "Terminal"
+    case tunnels = "Tunnels"
     case memory = "Memory"
     case settings = "Settings"
 
@@ -24,6 +26,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
     public var systemImage: String {
         switch self {
         case .dashboard: return "gauge.with.dots.needle.33percent"
+        case .alerts: return "bell.badge"
         case .servers: return "server.rack"
         case .projects: return "folder.badge.gearshape"
         case .containers: return "shippingbox"
@@ -38,6 +41,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
         case .metrics: return "chart.xyaxis.line"
         case .deployments: return "arrow.up.circle"
         case .terminal: return "terminal"
+        case .tunnels: return "network.badge.shield.half.filled"
         case .memory: return "brain"
         case .settings: return "gearshape"
         }

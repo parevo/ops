@@ -37,12 +37,7 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
     }
 
     private func makeAskPass(password: String) throws -> URL {
-        let dir = fileManager.temporaryDirectory
-        let script = dir.appendingPathComponent("parevo-askpass-\(UUID().uuidString).sh")
-        let escaped = password.replacingOccurrences(of: "'", with: "'\\''")
-        try "#!/bin/sh\necho '\(escaped)'\n".write(to: script, atomically: true, encoding: .utf8)
-        try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
-        return script
+        try SSHAskPass.makeScript(password: password)
     }
 
     private func baseArguments(for server: SSHConnectionInfo, socketPath: String) -> [String] {
@@ -170,12 +165,42 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
                     let combined = cleanedErr.isEmpty
                         ? cleanedOut
                         : (cleanedOut.isEmpty ? cleanedErr : cleanedOut + "\n" + cleanedErr)
+
+                    // Audit trail — skip internal polling / API scripts (metrics, docker socket, etc.)
+                    if Self.shouldAudit(command) {
+                        let preview = String(command.prefix(160))
+                        Task {
+                            try? await DependencyContainer.shared.resolve(MemoryServiceProtocol.self).recordCommand(
+                                command: preview,
+                                directory: "~",
+                                exitCode: code,
+                                isSuccess: code == 0,
+                                serverId: server.serverID,
+                                projectId: nil
+                            )
+                        }
+                    }
+
                     continuation.resume(returning: (combined, code))
                 } catch {
                     continuation.resume(throwing: error)
                 }
             }
         }
+    }
+
+    /// User-facing commands only — never store metrics scrapers / docker API curls.
+    private static func shouldAudit(_ command: String) -> Bool {
+        let c = command.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !c.isEmpty else { return false }
+        if c.contains("\n") { return false }
+        if c.count > 200 { return false }
+        if c.contains("===HOST===") || c.contains("===LOAD===") || c.contains("===CPU===") { return false }
+        if c.contains("===MEM===") || c.contains("===DISK===") || c.contains("===DOCKER===") { return false }
+        if c.contains("--unix-socket") || c.contains("/var/run/docker.sock") { return false }
+        if c.contains("__HTTP_STATUS__") { return false }
+        if c.contains("journalctl") && c.contains("--no-pager") && c.contains("-n 200") { return false }
+        return true
     }
 
     /// Live stream with TTY — for `docker logs -f`, shells, etc.

@@ -19,20 +19,43 @@ public enum OpsAlertKind: String, Sendable, CaseIterable {
         case .containerPressure: return "Stopped Containers"
         }
     }
+
+    public var systemImage: String {
+        switch self {
+        case .cpuHigh: return "cpu"
+        case .ramHigh: return "memorychip"
+        case .diskHigh: return "externaldrive"
+        case .swapHigh: return "arrow.triangle.swap"
+        case .healthLow: return "heart.slash"
+        case .containerPressure: return "shippingbox"
+        }
+    }
 }
 
 public struct OpsAlert: Identifiable, Sendable, Hashable {
     public let id: String
     public let kind: OpsAlertKind
     public let message: String
+    public let host: String
+    public let serverID: UUID?
     public let value: Double
     public let threshold: Double
     public let timestamp: Date
 
-    public init(kind: OpsAlertKind, message: String, value: Double, threshold: Double, timestamp: Date = Date()) {
-        self.id = "\(kind.rawValue)-\(Int(timestamp.timeIntervalSince1970))"
+    public init(
+        kind: OpsAlertKind,
+        message: String,
+        host: String = "",
+        serverID: UUID? = nil,
+        value: Double,
+        threshold: Double,
+        timestamp: Date = Date()
+    ) {
+        self.id = "\(serverID?.uuidString ?? host)-\(kind.rawValue)-\(Int(timestamp.timeIntervalSince1970 * 1000))"
         self.kind = kind
         self.message = message
+        self.host = host
+        self.serverID = serverID
         self.value = value
         self.threshold = threshold
         self.timestamp = timestamp
@@ -87,12 +110,17 @@ public struct AlertThresholds: Sendable {
 @MainActor
 public final class AlertMonitor {
     public private(set) var activeAlerts: [OpsAlert] = []
+    public private(set) var alertHistory: [OpsAlert] = []
+    public private(set) var unreadCount: Int = 0
     public private(set) var lastChecked: Date?
     public var thresholds = AlertThresholds()
     public var isEnabled = true
+    /// When true, checks every server; otherwise only the active host.
+    public var monitorAllServers = true
 
-    private var lastFired: [OpsAlertKind: Date] = [:]
+    private var lastFired: [String: Date] = [:]
     private var task: Task<Void, Never>?
+    private let historyCap = 200
 
     public init() {}
 
@@ -108,17 +136,39 @@ public final class AlertMonitor {
                     continue
                 }
                 let list = servers()
-                guard let info = session.connectionInfo(from: list) else {
+                let targets: [Server]
+                if self.monitorAllServers {
+                    targets = list
+                } else if let active = session.server(from: list) {
+                    targets = [active]
+                } else {
+                    targets = []
+                }
+
+                if targets.isEmpty {
                     try? await Task.sleep(nanoseconds: 3_000_000_000)
                     continue
                 }
-                do {
-                    let metrics = try await DependencyContainer.shared.resolve(MetricsServiceProtocol.self)
-                        .fetchLiveMetrics(for: info)
-                    await self.evaluate(metrics, host: info.name, notifications: notifications)
-                } catch {
-                    // Silent — avoid notification spam on SSH blips
+
+                var fresh: [OpsAlert] = []
+                for server in targets {
+                    let info = session.resolveConnection(server)
+                    do {
+                        let metrics = try await DependencyContainer.shared.resolve(MetricsServiceProtocol.self)
+                            .fetchLiveMetrics(for: info)
+                        let hostAlerts = await self.evaluate(
+                            metrics,
+                            host: server.name,
+                            serverID: server.id,
+                            notifications: notifications
+                        )
+                        fresh.append(contentsOf: hostAlerts)
+                    } catch {
+                        // Silent per-host — avoid spam
+                    }
                 }
+                self.activeAlerts = fresh
+                self.lastChecked = Date()
                 try? await Task.sleep(nanoseconds: 8_000_000_000)
             }
         }
@@ -129,17 +179,43 @@ public final class AlertMonitor {
         task = nil
     }
 
-    private func evaluate(_ metrics: SystemMetrics, host: String, notifications: NotificationServiceProtocol) async {
-        lastChecked = Date()
+    public func markAllRead() {
+        unreadCount = 0
+    }
+
+    public func clearHistory() {
+        alertHistory = []
+        unreadCount = 0
+    }
+
+    public func activeAlerts(for serverID: UUID?) -> [OpsAlert] {
+        guard let serverID else { return activeAlerts }
+        return activeAlerts.filter { $0.serverID == serverID }
+    }
+
+    private func evaluate(
+        _ metrics: SystemMetrics,
+        host: String,
+        serverID: UUID,
+        notifications: NotificationServiceProtocol
+    ) async -> [OpsAlert] {
+        let previousKinds = Set(activeAlerts.filter { $0.serverID == serverID }.map(\.kind))
         var fresh: [OpsAlert] = []
 
         func consider(_ kind: OpsAlertKind, value: Double, threshold: Double, message: String) async {
             guard value >= threshold else { return }
-            let alert = OpsAlert(kind: kind, message: message, value: value, threshold: threshold)
+            let alert = OpsAlert(kind: kind, message: message, host: host, serverID: serverID, value: value, threshold: threshold)
             fresh.append(alert)
-            let last = lastFired[kind] ?? .distantPast
+
+            let isNew = !previousKinds.contains(kind)
+            if isNew {
+                appendHistory(alert)
+            }
+
+            let key = "\(serverID.uuidString)-\(kind.rawValue)"
+            let last = lastFired[key] ?? .distantPast
             if Date().timeIntervalSince(last) >= thresholds.cooldownSeconds {
-                lastFired[kind] = Date()
+                lastFired[key] = Date()
                 await notifications.post(alert: alert)
             }
         }
@@ -161,6 +237,14 @@ public final class AlertMonitor {
                            message: "\(host): \(metrics.stoppedContainersCount) stopped containers")
         }
 
-        activeAlerts = fresh
+        return fresh
+    }
+
+    private func appendHistory(_ alert: OpsAlert) {
+        alertHistory.insert(alert, at: 0)
+        if alertHistory.count > historyCap {
+            alertHistory = Array(alertHistory.prefix(historyCap))
+        }
+        unreadCount += 1
     }
 }

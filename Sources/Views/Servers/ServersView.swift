@@ -9,6 +9,10 @@ struct ServersView: View {
     @State private var selectedServer: Server?
     @State private var showAddSheet = false
     @State private var connectionMessage: String?
+    @State private var exportDocument: ServersExportDocument?
+    @State private var showExporter = false
+    @State private var showImporter = false
+    @State private var ioMessage: String?
 
     var body: some View {
         HSplitView {
@@ -32,7 +36,18 @@ struct ServersView: View {
             .listStyle(.sidebar)
             .frame(minWidth: 240, idealWidth: 280, maxWidth: 340)
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button { showImporter = true } label: {
+                        Label("Import", systemImage: "square.and.arrow.down")
+                    }
+                    Button {
+                        if let data = try? ServerConfigIO.exportJSON(servers: Array(servers)) {
+                            exportDocument = ServersExportDocument(data: data)
+                            showExporter = true
+                        }
+                    } label: {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
                     Button { showAddSheet = true } label: {
                         Label("Add Server", systemImage: "plus")
                     }
@@ -65,6 +80,49 @@ struct ServersView: View {
                 }
             }
             .frame(minWidth: 580, minHeight: 520)
+        }
+        .fileExporter(
+            isPresented: $showExporter,
+            document: exportDocument,
+            contentType: .json,
+            defaultFilename: "ops-servers"
+        ) { result in
+            if case .failure(let error) = result {
+                ioMessage = error.localizedDescription
+            } else {
+                ioMessage = "Exported \(servers.count) server profiles (passwords excluded)."
+            }
+        }
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json]) { result in
+            switch result {
+            case .success(let url):
+                do {
+                    let accessed = url.startAccessingSecurityScopedResource()
+                    defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+                    let data = try Data(contentsOf: url)
+                    let dtos = try ServerConfigIO.importJSON(data)
+                    for dto in dtos {
+                        if servers.contains(where: { $0.id == dto.id || ($0.host == dto.host && $0.username == dto.username) }) {
+                            continue
+                        }
+                        modelContext.insert(dto.makeServer())
+                    }
+                    ioMessage = "Imported \(dtos.count) profile(s). Re-enter passwords in Keychain as needed."
+                } catch {
+                    ioMessage = error.localizedDescription
+                }
+            case .failure(let error):
+                ioMessage = error.localizedDescription
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let ioMessage {
+                Text(ioMessage)
+                    .font(.caption)
+                    .padding(8)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .padding()
+            }
         }
     }
 
@@ -362,5 +420,20 @@ struct AddServerSheet: View {
             statusMessage = error.localizedDescription
         }
         isTesting = false
+    }
+}
+
+struct ServersExportDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+    var data: Data
+
+    init(data: Data) { self.data = data }
+
+    init(configuration: ReadConfiguration) throws {
+        data = configuration.file.regularFileContents ?? Data()
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
     }
 }

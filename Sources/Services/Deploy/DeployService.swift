@@ -8,22 +8,48 @@ public final class DeployService: DeployServiceProtocol {
     }
 
     public func deploy(directory: String, on server: SSHConnectionInfo) async throws -> String {
+        let steps = try await deployPipeline(directory: directory, on: server)
+        return steps.map { "[\($0.isSuccess ? "OK" : "FAIL")] \($0.title)\n\($0.detail)" }.joined(separator: "\n\n")
+    }
+
+    public func deployPipeline(directory: String, on server: SSHConnectionInfo) async throws -> [DeployStep] {
         let dir = shellQuote(directory)
-        let cmd = """
-        set -e
-        cd \(dir)
-        if [ -d .git ]; then git pull --ff-only; fi
-        if [ -f docker-compose.yml ] || [ -f compose.yml ]; then
-          docker compose pull
-          docker compose up -d
-        fi
-        echo DEPLOY_OK
-        """
-        let res = try await ssh.executeCommand(cmd, on: server)
-        guard res.exitCode == 0 else {
-            throw OpsError.sshCommandFailed(exitCode: res.exitCode, output: res.output)
+        var steps: [DeployStep] = []
+
+        func run(_ title: String, _ command: String) async throws {
+            let res = try await ssh.executeCommand(command, on: server)
+            let ok = res.exitCode == 0
+            steps.append(DeployStep(title: title, detail: res.output.trimmingCharacters(in: .whitespacesAndNewlines), isSuccess: ok))
+            if !ok {
+                throw OpsError.sshCommandFailed(exitCode: res.exitCode, output: res.output)
+            }
         }
-        return res.output
+
+        try await run("Git pull", """
+            set -e
+            cd \(dir)
+            if [ -d .git ]; then git pull --ff-only; else echo 'No git repo'; fi
+            """)
+
+        try await run("Compose pull", """
+            set -e
+            cd \(dir)
+            if [ -f docker-compose.yml ] || [ -f compose.yml ]; then docker compose pull; else echo 'No compose file'; fi
+            """)
+
+        try await run("Compose up", """
+            set -e
+            cd \(dir)
+            if [ -f docker-compose.yml ] || [ -f compose.yml ]; then docker compose up -d; else echo 'No compose file'; fi
+            """)
+
+        try await run("Health snapshot", """
+            set -e
+            cd \(dir)
+            docker compose ps 2>/dev/null || docker ps --format 'table {{.Names}}\t{{.Status}}' | head -20
+            """)
+
+        return steps
     }
 
     public func rollbackHint(directory: String, on server: SSHConnectionInfo) async throws -> String {

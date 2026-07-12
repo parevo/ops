@@ -16,6 +16,7 @@ public struct ContentView: View {
                         Section("Overview") {
                             link(.dashboard)
                             link(.metrics)
+                            alertsLink
                         }
                         Section("Infrastructure") {
                             link(.servers)
@@ -35,6 +36,7 @@ public struct ContentView: View {
                             link(.logs)
                             link(.deployments)
                             link(.terminal)
+                            link(.tunnels)
                         }
                         Section("Tools") {
                             link(.memory)
@@ -42,7 +44,7 @@ public struct ContentView: View {
                         }
                     }
                     .listStyle(.sidebar)
-                    .safeAreaInset(edge: .bottom) { footer }
+                    .safeAreaInset(edge: .bottom) { SidebarServerSwitcher() }
                     .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 300)
                     .navigationTitle("Ops")
                 } detail: {
@@ -58,11 +60,23 @@ public struct ContentView: View {
                                     }
                                     .keyboardShortcut("k", modifiers: [.command])
 
-                                    if !alertMonitor.activeAlerts.isEmpty {
-                                        Label("\(alertMonitor.activeAlerts.count)", systemImage: "bell.badge.fill")
-                                            .foregroundStyle(BrandColor.danger)
-                                            .help(alertMonitor.activeAlerts.map(\.kind.title).joined(separator: ", "))
+                                    Button {
+                                        session.navigate(to: .alerts)
+                                        alertMonitor.markAllRead()
+                                    } label: {
+                                        Label(
+                                            alertMonitor.activeAlerts.isEmpty
+                                                ? "Alerts"
+                                                : "\(alertMonitor.activeAlerts.count)",
+                                            systemImage: alertMonitor.activeAlerts.isEmpty
+                                                ? "bell"
+                                                : "bell.badge.fill"
+                                        )
                                     }
+                                    .foregroundStyle(alertMonitor.activeAlerts.isEmpty ? BrandColor.textSecondary : BrandColor.danger)
+                                    .help(alertMonitor.activeAlerts.isEmpty
+                                          ? "Alert Center"
+                                          : alertMonitor.activeAlerts.map(\.kind.title).joined(separator: ", "))
 
                                     serverMenu
 
@@ -71,9 +85,15 @@ public struct ContentView: View {
                                     } label: {
                                         Label("Shell", systemImage: "terminal.fill")
                                     }
+                                    .keyboardShortcut("t", modifiers: [.command, .shift])
 
                                     Button {
-                                        session.terminalVisible.toggle()
+                                        if session.terminalVisible {
+                                            session.terminalVisible = false
+                                        } else {
+                                            session.ensureTerminalTab()
+                                            session.terminalVisible = true
+                                        }
                                     } label: {
                                         Label("Panel", systemImage: "rectangle.bottomthird.inset.filled")
                                     }
@@ -97,9 +117,6 @@ public struct ContentView: View {
                 CommandPaletteView(isPresented: $session.showCommandPalette)
             }
         }
-        .sheet(isPresented: $session.showInteractiveShell) {
-            InteractiveShellSheet()
-        }
         .onAppear {
             if session.activeServerID == nil {
                 session.select(servers.first)
@@ -114,6 +131,14 @@ public struct ContentView: View {
                 session.select(newServers.first)
             }
         }
+        .alert("Shell", isPresented: Binding(
+            get: { session.lastErrorMessage != nil },
+            set: { if !$0 { session.lastErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) { session.lastErrorMessage = nil }
+        } message: {
+            Text(session.lastErrorMessage ?? "")
+        }
     }
 
     private func link(_ item: SidebarItem) -> some View {
@@ -123,33 +148,26 @@ public struct ContentView: View {
         .tag(item)
     }
 
-    private var footer: some View {
-        VStack(alignment: .leading, spacing: BrandSpacing.tiny) {
-            Divider()
-            HStack(spacing: BrandSpacing.small) {
-                Image(systemName: session.activeServerID != nil ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(session.activeServerID != nil ? BrandColor.success : BrandColor.warning)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(session.server(from: servers)?.name ?? "No Host Selected")
-                        .font(.subheadline.weight(.medium))
-                    if let server = session.server(from: servers) {
-                        Text("\(server.username)@\(server.host)")
-                            .font(.caption2)
-                            .foregroundStyle(BrandColor.textSecondary)
-                            .lineLimit(1)
-                    } else {
-                        Text("by Parevo Co.")
-                            .font(.caption2)
-                            .foregroundStyle(BrandColor.textMuted)
-                    }
+    private var alertsLink: some View {
+        NavigationLink(value: SidebarItem.alerts) {
+            HStack {
+                Label("Alerts", systemImage: SidebarItem.alerts.systemImage)
+                Spacer()
+                if alertMonitor.unreadCount > 0 {
+                    Text("\(alertMonitor.unreadCount)")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(BrandColor.danger, in: Capsule())
+                } else if !alertMonitor.activeAlerts.isEmpty {
+                    Text("\(alertMonitor.activeAlerts.count)")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(BrandColor.danger)
                 }
-                Spacer(minLength: 0)
             }
-            .padding(.horizontal, BrandSpacing.medium)
-            .padding(.vertical, BrandSpacing.small)
         }
-        .background(.bar)
+        .tag(SidebarItem.alerts)
     }
 
     private var serverMenu: some View {
@@ -180,6 +198,7 @@ public struct ContentView: View {
     private func detail(for item: SidebarItem?) -> some View {
         switch item {
         case .dashboard: DashboardView()
+        case .alerts: AlertsView()
         case .servers: ServersView()
         case .projects: ProjectsView()
         case .containers: ContainersView()
@@ -194,6 +213,7 @@ public struct ContentView: View {
         case .metrics: MetricsView()
         case .deployments: DeploymentsView()
         case .terminal: TerminalView()
+        case .tunnels: TunnelsView()
         case .memory: MemoryView()
         case .settings: SettingsView()
         case nil:

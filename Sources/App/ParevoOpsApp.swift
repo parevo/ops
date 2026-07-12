@@ -36,15 +36,37 @@ struct ParevoOpsApp: App {
                 }
                 .keyboardShortcut("k", modifiers: [.command])
 
+                Button("New Terminal Tab") {
+                    session.newTerminalTab()
+                }
+                .keyboardShortcut("t", modifiers: [.command])
+
+                Button("Close Terminal Tab") {
+                    if let id = session.selectedTerminalTabID {
+                        session.closeTerminalTab(id)
+                    }
+                }
+                .keyboardShortcut("w", modifiers: [.command, .shift])
+
                 Button("Interactive Shell") {
                     session.openInteractiveShell()
                 }
                 .keyboardShortcut("t", modifiers: [.command, .shift])
 
                 Button("Toggle Terminal Panel") {
-                    session.terminalVisible.toggle()
+                    if session.terminalVisible {
+                        session.terminalVisible = false
+                    } else {
+                        session.ensureTerminalTab()
+                        session.terminalVisible = true
+                    }
                 }
                 .keyboardShortcut("`", modifiers: [.control])
+
+                Button("Alert Center") {
+                    session.navigate(to: .alerts)
+                }
+                .keyboardShortcut("a", modifiers: [.command, .shift])
             }
         }
     }

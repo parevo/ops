@@ -1,90 +1,66 @@
 import AppKit
 import SwiftUI
-import SwiftData
 import SwiftTerm
 
-/// Live SSH PTY terminal powered by SwiftTerm + local ssh process (ControlMaster aware).
+/// Embeds a registry-backed SwiftTerm session so tab switches don't restart SSH.
+/// Each `tabID` maps to exactly one `LocalProcessTerminalView` — never shared.
 struct InteractiveSSHTerminalView: NSViewRepresentable {
+    let tabID: UUID
     let server: SSHConnectionInfo
     var initialCommand: String?
+    let registry: TerminalHostRegistry
 
-    func makeNSView(context: Context) -> LocalProcessTerminalView {
-        let view = LocalProcessTerminalView(frame: .zero)
-        view.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
-        context.coordinator.start(view: view, server: server, initialCommand: initialCommand)
-        return view
+    func makeCoordinator() -> Coordinator {
+        Coordinator(tabID: tabID)
     }
 
-    func updateNSView(_ nsView: LocalProcessTerminalView, context: Context) {}
+    func makeNSView(context: Context) -> NSView {
+        let container = TerminalHostContainer()
+        context.coordinator.attachedTabID = nil
+        attach(to: container, context: context)
+        return container
+    }
 
-    func makeCoordinator() -> Coordinator { Coordinator() }
+    func updateNSView(_ container: NSView, context: Context) {
+        attach(to: container, context: context)
+    }
+
+    static func dismantleNSView(_ container: NSView, coordinator: Coordinator) {
+        container.subviews.forEach { $0.removeFromSuperview() }
+        coordinator.attachedTabID = nil
+    }
+
+    private func attach(to container: NSView, context: Context) {
+        let host = registry.host(for: tabID, server: server, initialCommand: initialCommand)
+
+        // Critical: remove ANY other terminal views so tabs never visually mix.
+        for subview in container.subviews where subview !== host {
+            subview.removeFromSuperview()
+        }
+
+        if context.coordinator.attachedTabID != tabID || host.superview !== container {
+            host.removeFromSuperview()
+            host.frame = container.bounds
+            host.autoresizingMask = [.width, .height]
+            container.addSubview(host)
+            context.coordinator.attachedTabID = tabID
+        } else {
+            host.frame = container.bounds
+        }
+
+        registry.applyAppearance(to: host)
+    }
 
     final class Coordinator {
-        func start(view: LocalProcessTerminalView, server: SSHConnectionInfo, initialCommand: String?) {
-            var args: [String] = [
-                "-tt",
-                "-o", "ControlMaster=auto",
-                "-o", "ControlPersist=30m",
-                "-o", "ControlPath=/tmp/parevo-ssh-\(sanitize(server.username))-\(sanitize(server.host))-\(server.port)",
-                "-o", "StrictHostKeyChecking=accept-new",
-                "-o", "Compression=no",
-                "-p", "\(server.port)"
-            ]
+        var attachedTabID: UUID?
 
-            if server.authMethod == .sshKey, let key = server.privateKeyPath, !key.isEmpty {
-                let expanded = (key as NSString).expandingTildeInPath
-                args += ["-i", expanded, "-o", "IdentitiesOnly=yes", "-o", "BatchMode=yes"]
-            }
-
-            args.append("\(server.username)@\(server.host)")
-
-            if let cmd = initialCommand?.trimmingCharacters(in: .whitespacesAndNewlines), !cmd.isEmpty {
-                // Run command inside a login shell so follow modes keep the session open until exit.
-                args.append("bash -lc \(shellQuote(cmd))")
-            }
-
-            view.startProcess(executable: "/usr/bin/ssh", args: args, environment: nil, execName: "ssh")
-        }
-
-        private func sanitize(_ value: String) -> String {
-            value.replacingOccurrences(of: ":", with: "_").replacingOccurrences(of: "/", with: "_")
-        }
-
-        private func shellQuote(_ value: String) -> String {
-            "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
+        init(tabID: UUID) {
+            self.attachedTabID = nil
         }
     }
 }
 
-struct InteractiveShellSheet: View {
-    @Environment(AppSession.self) private var session
-    @Query private var servers: [Server]
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            Group {
-                if let info = session.connectionInfo(from: servers) {
-                    InteractiveSSHTerminalView(server: info, initialCommand: session.interactiveShellCommand)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    ContentUnavailableView(
-                        "No Active Server",
-                        systemImage: "terminal",
-                        description: Text("Select a host before opening the interactive shell.")
-                    )
-                }
-            }
-            .navigationTitle("Interactive Shell")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
-                        session.interactiveShellCommand = nil
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .frame(minWidth: 800, minHeight: 520)
-    }
+/// Plain container that only hosts one terminal subview at a time.
+private final class TerminalHostContainer: NSView {
+    override var isFlipped: Bool { true }
 }

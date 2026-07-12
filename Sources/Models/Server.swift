@@ -63,7 +63,8 @@ public struct SSHConnectionInfo: Sendable, Codable, Hashable {
     public var authMethod: Server.AuthMethod
     public var passwordPlain: String?
     public var privateKeyPath: String?
-    
+    public var serverID: UUID?
+
     public init(
         name: String,
         host: String,
@@ -71,7 +72,8 @@ public struct SSHConnectionInfo: Sendable, Codable, Hashable {
         username: String = "root",
         authMethod: Server.AuthMethod = .password,
         passwordPlain: String? = nil,
-        privateKeyPath: String? = nil
+        privateKeyPath: String? = nil,
+        serverID: UUID? = nil
     ) {
         self.name = name
         self.host = host
@@ -80,6 +82,14 @@ public struct SSHConnectionInfo: Sendable, Codable, Hashable {
         self.authMethod = authMethod
         self.passwordPlain = passwordPlain
         self.privateKeyPath = privateKeyPath
+        self.serverID = serverID
+    }
+
+    /// Shared ControlMaster socket path (must match SSHService).
+    public var controlSocketPath: String {
+        let safeHost = host.replacingOccurrences(of: ":", with: "_")
+        let safeUser = username.replacingOccurrences(of: "/", with: "_")
+        return "/tmp/parevo-ssh-\(safeUser)-\(safeHost)-\(port)"
     }
 }
 
@@ -92,7 +102,8 @@ extension Server {
             username: username,
             authMethod: authMethod,
             passwordPlain: passwordPlain,
-            privateKeyPath: privateKeyPath
+            privateKeyPath: privateKeyPath,
+            serverID: id
         )
     }
 }

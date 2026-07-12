@@ -19,12 +19,15 @@ public protocol DockerServiceProtocol: Sendable {
     func restartContainer(id: String, on server: SSHConnectionInfo) async throws
     func deleteContainer(id: String, on server: SSHConnectionInfo) async throws
     func inspectContainer(id: String, on server: SSHConnectionInfo) async throws -> String
+    func inspectContainerSummary(id: String, on server: SSHConnectionInfo) async throws -> ContainerInspectSummary
     func fetchImages(for server: SSHConnectionInfo) async throws -> [DockerImageInfo]
     func fetchVolumes(for server: SSHConnectionInfo) async throws -> [DockerVolumeInfo]
     func fetchNetworks(for server: SSHConnectionInfo) async throws -> [DockerNetworkInfo]
     func fetchComposeProjects(for server: SSHConnectionInfo) async throws -> [ComposeProjectInfo]
     func composeUp(project: String, on server: SSHConnectionInfo) async throws
     func composeDown(project: String, on server: SSHConnectionInfo) async throws
+    func composePs(project: String, on server: SSHConnectionInfo) async throws -> [ComposeServiceInfo]
+    func composeRestart(project: String, service: String, on server: SSHConnectionInfo) async throws
 }
 
 public protocol CronServiceProtocol: Sendable {
@@ -59,6 +62,7 @@ public protocol MemoryServiceProtocol: Sendable {
     ) async throws
     func getSmartSuggestions(input: String, serverId: UUID?, projectId: UUID?) async throws -> [String]
     func getPatternNextStep(currentCommand: String, serverId: UUID?, projectId: UUID?) async throws -> String?
+    func fetchHistory(limit: Int, serverId: UUID?) async throws -> [CommandHistoryEntry]
 }
 
 public protocol SystemdServiceProtocol: Sendable {
@@ -72,6 +76,7 @@ public protocol SystemdServiceProtocol: Sendable {
 
 public protocol DeployServiceProtocol: Sendable {
     func deploy(directory: String, on server: SSHConnectionInfo) async throws -> String
+    func deployPipeline(directory: String, on server: SSHConnectionInfo) async throws -> [DeployStep]
     func rollbackHint(directory: String, on server: SSHConnectionInfo) async throws -> String
     func recentEvents(directory: String, on server: SSHConnectionInfo) async throws -> [DeploymentEvent]
 }

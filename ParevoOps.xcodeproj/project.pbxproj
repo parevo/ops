@@ -45,9 +45,13 @@
 		F5B038EF671CF1A997C21DFE /* ServersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B03F2889166848A45AC04E /* ServersView.swift */; };
 		F5B0DF3E33EB60F6F49667BC /* SidebarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B00357411D0486E585B50E /* SidebarItem.swift */; };
 		F5B0C22F4DF715EFA1726C16 /* InteractiveSSHTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0CCD7552D7F0236DCDFBF /* InteractiveSSHTerminalView.swift */; };
-		F5B06DC1BD4449E67D50C462 /* TerminalConsoleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0CC9A1C00A1E02102458D /* TerminalConsoleView.swift */; };
 		F5B087B3B23297D53CC6224C /* TerminalPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B00656EE90AB37F3A4ED1D /* TerminalPanel.swift */; };
-		F5B08B93EAFF1A115D3C8ACE /* TerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0CB8C03C1B70210333A8C /* TerminalSession.swift */; };
+		F5B0ALERTSVIEWBF000001 /* AlertsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0ALERTSVIEWFR000001 /* AlertsView.swift */; };
+		F5B0TERMHOSTREGBF00001 /* TerminalHostRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0TERMHOSTREGFR00001 /* TerminalHostRegistry.swift */; };
+		F5B0SRVSCOPEBF0000001 /* ServerScopeBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0SRVSCOPEFR0000001 /* ServerScopeBanner.swift */; };
+		F5B0SERVEREXPBF000001 /* ServerExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0SERVEREXPFR000001 /* ServerExport.swift */; };
+		F5B0PORTFWDSVCBF000001 /* PortForwardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0PORTFWDSVCFR000001 /* PortForwardService.swift */; };
+		F5B0SSHASKPASSBF000001 /* SSHAskPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0SSHASKPASSFR000001 /* SSHAskPass.swift */; };
 		F5B0A6070B9CF28E71610AA2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5B059DAA59D477A91E75E04 /* Assets.xcassets */; };
 		F5B0SWIFTTERMPROD000001 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = F5B0SWIFTTERMPRODUCT01 /* SwiftTerm */; };
 /* End PBXBuildFile */
@@ -93,9 +97,13 @@
 		F5B03F2889166848A45AC04E /* ServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Servers/ServersView.swift"; sourceTree = "<group>"; };
 		F5B00357411D0486E585B50E /* SidebarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Shared/SidebarItem.swift"; sourceTree = "<group>"; };
 		F5B0CCD7552D7F0236DCDFBF /* InteractiveSSHTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Terminal/InteractiveSSHTerminalView.swift"; sourceTree = "<group>"; };
-		F5B0CC9A1C00A1E02102458D /* TerminalConsoleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Terminal/TerminalConsoleView.swift"; sourceTree = "<group>"; };
 		F5B00656EE90AB37F3A4ED1D /* TerminalPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Terminal/TerminalPanel.swift"; sourceTree = "<group>"; };
-		F5B0CB8C03C1B70210333A8C /* TerminalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Terminal/TerminalSession.swift"; sourceTree = "<group>"; };
+		F5B0ALERTSVIEWFR000001 /* AlertsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Alerts/AlertsView.swift"; sourceTree = "<group>"; };
+		F5B0TERMHOSTREGFR00001 /* TerminalHostRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Terminal/TerminalHostRegistry.swift"; sourceTree = "<group>"; };
+		F5B0SRVSCOPEFR0000001 /* ServerScopeBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Shared/ServerScopeBanner.swift"; sourceTree = "<group>"; };
+		F5B0SERVEREXPFR000001 /* ServerExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Models/ServerExport.swift"; sourceTree = "<group>"; };
+		F5B0PORTFWDSVCFR000001 /* PortForwardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/SSH/PortForwardService.swift"; sourceTree = "<group>"; };
+		F5B0SSHASKPASSFR000001 /* SSHAskPass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/SSH/SSHAskPass.swift"; sourceTree = "<group>"; };
 		F5B059DAA59D477A91E75E04 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference */
 /* Begin PBXFrameworksBuildPhase */
@@ -169,9 +177,13 @@
 				F5B03F2889166848A45AC04E /* ServersView.swift */,
 				F5B00357411D0486E585B50E /* SidebarItem.swift */,
 				F5B0CCD7552D7F0236DCDFBF /* InteractiveSSHTerminalView.swift */,
-				F5B0CC9A1C00A1E02102458D /* TerminalConsoleView.swift */,
 				F5B00656EE90AB37F3A4ED1D /* TerminalPanel.swift */,
-				F5B0CB8C03C1B70210333A8C /* TerminalSession.swift */,
+				F5B0ALERTSVIEWFR000001 /* AlertsView.swift */,
+				F5B0TERMHOSTREGFR00001 /* TerminalHostRegistry.swift */,
+				F5B0SRVSCOPEFR0000001 /* ServerScopeBanner.swift */,
+				F5B0SERVEREXPFR000001 /* ServerExport.swift */,
+				F5B0PORTFWDSVCFR000001 /* PortForwardService.swift */,
+				F5B0SSHASKPASSFR000001 /* SSHAskPass.swift */,
 			);
 			name = Sources;
 			sourceTree = "<group>";
@@ -277,9 +289,13 @@
 				F5B038EF671CF1A997C21DFE /* ServersView.swift in Sources */,
 				F5B0DF3E33EB60F6F49667BC /* SidebarItem.swift in Sources */,
 				F5B0C22F4DF715EFA1726C16 /* InteractiveSSHTerminalView.swift in Sources */,
-				F5B06DC1BD4449E67D50C462 /* TerminalConsoleView.swift in Sources */,
 				F5B087B3B23297D53CC6224C /* TerminalPanel.swift in Sources */,
-				F5B08B93EAFF1A115D3C8ACE /* TerminalSession.swift in Sources */,
+				F5B0ALERTSVIEWBF000001 /* AlertsView.swift in Sources */,
+				F5B0TERMHOSTREGBF00001 /* TerminalHostRegistry.swift in Sources */,
+				F5B0SRVSCOPEBF0000001 /* ServerScopeBanner.swift in Sources */,
+				F5B0SERVEREXPBF000001 /* ServerExport.swift in Sources */,
+				F5B0PORTFWDSVCBF000001 /* PortForwardService.swift in Sources */,
+				F5B0SSHASKPASSBF000001 /* SSHAskPass.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

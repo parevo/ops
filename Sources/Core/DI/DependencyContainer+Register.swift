@@ -13,5 +13,6 @@ extension DependencyContainer {
         register(SystemdServiceProtocol.self) { SystemdService() }
         register(DeployServiceProtocol.self) { DeployService() }
         register(NotificationServiceProtocol.self) { NotificationService() }
+        register(PortForwardServiceProtocol.self) { PortForwardService() }
     }
 }
