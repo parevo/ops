@@ -122,7 +122,7 @@ function App() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const stats = await invoke<SystemMetrics>("get_system_status");
+        const stats = await invoke<SystemMetrics>("get_system_status", { server: activeServer });
         setMetrics(stats);
       } catch (err) {
         console.error("Failed to query telemetry:", err);
@@ -132,7 +132,7 @@ function App() {
     fetchMetrics();
     const interval = setInterval(fetchMetrics, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeServer]);
 
   // Fetch lists on screen navigation
   useEffect(() => {
@@ -147,7 +147,7 @@ function App() {
     } else if (activeTab === "logs") {
       loadLogs();
     }
-  }, [activeTab]);
+  }, [activeTab, activeServer]);
 
   const loadServers = async () => {
     try {
@@ -255,7 +255,7 @@ function App() {
 
   const loadContainers = async () => {
     try {
-      const list = await invoke<ContainerInfo[]>("list_containers");
+      const list = await invoke<ContainerInfo[]>("list_containers", { server: activeServer });
       setContainers(list);
     } catch (err) {
       console.error(err);
@@ -277,7 +277,7 @@ function App() {
 
   const loadServices = async () => {
     try {
-      const info = await invoke<ServiceInfo>("get_service_status", { service: "nginx" });
+      const info = await invoke<ServiceInfo>("get_service_status", { service: "nginx", server: activeServer });
       setServices([info, {
         name: "postgresql.service",
         load_state: "loaded",
@@ -298,7 +298,7 @@ function App() {
 
   const loadFiles = async (dir: string) => {
     try {
-      const list = await invoke<FileEntry[]>("list_directory", { path: dir });
+      const list = await invoke<FileEntry[]>("list_directory", { path: dir, server: activeServer });
       setFiles(list);
       setCurrentFilePath(dir);
     } catch (err) {
@@ -308,7 +308,7 @@ function App() {
 
   const openFile = async (file: FileEntry) => {
     try {
-      const content = await invoke<string>("read_file", { path: file.path });
+      const content = await invoke<string>("read_file", { path: file.path, server: activeServer });
       setFileContent(content);
       setEditingFile(file);
     } catch (err) {
@@ -330,7 +330,7 @@ function App() {
 
   const loadLogs = async () => {
     try {
-      const logs = await invoke<{ message: string }[]>("fetch_logs", { source: "nginx-proxy", limit: 30 });
+      const logs = await invoke<{ message: string }[]>("fetch_logs", { source: "nginx-proxy", limit: 30, server: activeServer });
       setActiveLogs(logs.map(l => l.message));
     } catch (err) {
       console.error(err);
