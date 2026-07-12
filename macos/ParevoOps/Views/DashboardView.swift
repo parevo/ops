@@ -10,43 +10,45 @@ public struct DashboardView: View {
     }
     
     public var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Header connection status banner
-                    connectionHeader
-                    
-                    // Main gauges grid
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150))], spacing: 16) {
-                        gaugeCard(title: "CPU Load", value: metrics.cpuUsage, color: .purple)
-                        gaugeCard(title: "Memory Usage", value: metrics.memoryUsage, color: .violet)
-                        gaugeCard(title: "Storage Space", value: metrics.diskUsage, color: .blue)
-                    }
-                    
+        ScrollView {
+            VStack(spacing: 24) {
+                // Header connection status banner
+                connectionHeader
+                
+                // Main gauges row
+                HStack(spacing: 20) {
+                    gaugeCard(title: "CPU Load", value: metrics.cpuUsage, color: .purple)
+                    gaugeCard(title: "Memory Usage", value: metrics.memoryUsage, color: .violet)
+                    gaugeCard(title: "Storage Space", value: metrics.diskUsage, color: .blue)
+                }
+                
+                HStack(alignment: .top, spacing: 20) {
                     // Host characteristics card
                     hostDetailsCard
+                        .frame(maxWidth: .infinity)
                     
                     // Live health check chart indicator
                     healthCheckIndicator
+                        .frame(maxWidth: .infinity)
                 }
-                .padding()
             }
-            .navigationTitle("Dashboard")
-            .background(Color(red: 0.03, green: 0.03, blue: 0.05))
-            .onAppear(perform: startPolling)
-            .onDisappear(perform: stopPolling)
-            .onChange(of: activeServer, perform: { _ in updateServerMetrics() })
+            .padding(24)
         }
+        .navigationTitle("Dashboard")
+        .onAppear(perform: startPolling)
+        .onDisappear(perform: stopPolling)
+        .onChange(of: activeServer, perform: { _ in updateServerMetrics() })
     }
     
     private var connectionHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(activeServer == nil ? "Local Machine Workspace" : activeServer!.name)
-                    .font(.headline)
+                    .font(.title2)
+                    .fontWeight(.bold)
                     .foregroundColor(.white)
                 Text(activeServer == nil ? "Connected Context: localhost" : "\(activeServer!.username)@\(activeServer!.host)")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundColor(.zincSecondary)
             }
             Spacer()
@@ -54,17 +56,17 @@ public struct DashboardView: View {
                 Circle()
                     .fill(Color.emerald)
                     .frame(width: 8, height: 8)
-                Text("🟢 Active")
+                Text("CONNECTED")
                     .font(.caption2)
                     .fontWeight(.bold)
                     .foregroundColor(.emerald)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(Color.emerald.opacity(0.1))
             .cornerRadius(8)
         }
-        .padding()
+        .padding(20)
         .background(Color.zincPanel)
         .cornerRadius(12)
         .overlay(
@@ -74,7 +76,7 @@ public struct DashboardView: View {
     }
     
     private func gaugeCard(title: String, value: Float, color: Color) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             Text(title)
                 .font(.caption)
                 .fontWeight(.bold)
@@ -84,22 +86,22 @@ public struct DashboardView: View {
             ZStack {
                 Circle()
                     .stroke(Color.zincBorder, lineWidth: 8)
-                    .frame(width: 90, height: 90)
+                    .frame(width: 110, height: 110)
                 Circle()
                     .trim(from: 0.0, to: CGFloat(value / 100.0))
                     .stroke(color, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                    .frame(width: 90, height: 90)
+                    .frame(width: 110, height: 110)
                     .rotationEffect(.degrees(-90))
                     .animation(.easeOut, value: value)
                 
                 Text(String(format: "%.1f%%", value))
-                    .font(.system(.subheadline, design: .monospaced))
+                    .font(.system(.title3, design: .monospaced))
                     .fontWeight(.bold)
                     .foregroundColor(.white)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
+        .padding(.vertical, 24)
         .background(Color.zincPanel)
         .cornerRadius(12)
         .overlay(
@@ -109,7 +111,7 @@ public struct DashboardView: View {
     }
     
     private var hostDetailsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             Text("Instance Configuration")
                 .font(.caption)
                 .fontWeight(.bold)
@@ -119,12 +121,12 @@ public struct DashboardView: View {
             Divider()
                 .background(Color.zincBorder)
             
-            detailRow(title: "Operating System", value: activeServer == nil ? "macOS (Apple Silicon)" : "Ubuntu 22.04 LTS")
-            detailRow(title: "Virtualization", value: activeServer == nil ? "Native hypervisor" : "Docker & KVM")
+            detailRow(title: "Operating System", value: activeServer == nil ? "macOS (Apple Silicon)" : "Ubuntu 22.04 LTS (GNU/Linux)")
+            detailRow(title: "Virtualization", value: activeServer == nil ? "Apple Hypervisor" : "Docker & QEMU KVM")
             detailRow(title: "Architecture", value: "arm64 / x86_64")
-            detailRow(title: "SSH Port Status", value: activeServer == nil ? "closed" : "\(activeServer!.port) (open)")
+            detailRow(title: "SSH Port Status", value: activeServer == nil ? "closed" : "\(activeServer!.port) (open/listening)")
         }
-        .padding()
+        .padding(20)
         .background(Color.zincPanel)
         .cornerRadius(12)
         .overlay(
@@ -134,30 +136,32 @@ public struct DashboardView: View {
     }
     
     private var healthCheckIndicator: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 14) {
             Text("SRE Infrastructure Score")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.zincSecondary)
                 .textCase(.uppercase)
             
-            HStack(spacing: 12) {
+            Divider()
+                .background(Color.zincBorder)
+            
+            HStack(spacing: 16) {
                 Text("98")
-                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                    .font(.system(size: 48, weight: .bold, design: .rounded))
                     .foregroundColor(.purple)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Optimal Health")
-                        .font(.caption)
-                        .fontWeight(.bold)
+                        .font(.headline)
                         .foregroundColor(.white)
-                    Text("All monitored daemon sockets are responding inside 15ms.")
-                        .font(.caption2)
+                    Text("All monitored remote SSH socket responses are active below 15ms limit threshold.")
+                        .font(.caption)
                         .foregroundColor(.zincSecondary)
                 }
             }
+            .padding(.vertical, 8)
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
         .background(Color.zincPanel)
         .cornerRadius(12)
         .overlay(
@@ -211,3 +215,4 @@ extension Color {
     static let emerald = Color(red: 0.06, green: 0.80, blue: 0.48)
     static let violet = Color(red: 0.62, green: 0.32, blue: 0.98)
 }
+// End of file

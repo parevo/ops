@@ -9,43 +9,45 @@ public struct ServicesView: View {
     }
     
     public var body: some View {
-        NavigationStack {
-            List {
-                Section(header: Text("systemd Daemons Management").font(.caption).foregroundColor(.zincSecondary)) {
+        VStack(spacing: 0) {
+            // Action bar
+            HStack {
+                Text("systemd Daemons Management")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Spacer()
+                Button(action: loadServices) {
+                    Label("Refresh", systemImage: "arrow.clockwise")
+                }
+            }
+            .padding()
+            .background(Color.black.opacity(0.15))
+            
+            ScrollView {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 280))], spacing: 16) {
                     if servicesList.isEmpty {
                         Text("Scanning systemd service states...")
                             .font(.caption)
                             .foregroundColor(.zincSecondary)
                     } else {
                         ForEach(servicesList) { srv in
-                            serviceRowCard(srv)
-                                .listRowInsets(EdgeInsets())
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
+                            serviceGridCard(srv)
                         }
                     }
                 }
+                .padding(20)
             }
-            .navigationTitle("Services")
-            .background(Color(red: 0.03, green: 0.03, blue: 0.05))
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: loadServices) {
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundColor(.purple)
-                    }
-                }
-            }
-            .onAppear(perform: loadServices)
-            .onChange(of: activeServer, perform: { _ in loadServices() })
         }
+        .navigationTitle("Services")
+        .onAppear(perform: loadServices)
+        .onChange(of: activeServer, perform: { _ in loadServices() })
     }
     
-    private func serviceRowCard(_ item: ServiceInfo) -> some View {
+    private func serviceGridCard(_ item: ServiceInfo) -> some View {
         let isActive = item.activeState == "active"
         let isFailed = item.activeState == "failed"
         
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text(item.name)
                     .font(.headline)
@@ -68,8 +70,10 @@ public struct ServicesView: View {
             }
             
             Text(item.description)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundColor(.zincSecondary)
+                .frame(height: 36, alignment: .topLeading)
+                .lineLimit(2)
             
             Divider()
                 .background(Color.zincBorder)
@@ -80,15 +84,13 @@ public struct ServicesView: View {
                 actionButton("Restart", color: .purple) { runAction("restart", on: item) }
             }
         }
-        .padding()
+        .padding(16)
         .background(Color.zincPanel)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.zincBorder, lineWidth: 1)
         )
-        .padding(.horizontal)
-        .padding(.vertical, 4)
     }
     
     private func actionButton(_ label: String, color: Color, action: @escaping () -> Void) -> some View {
@@ -102,6 +104,7 @@ public struct ServicesView: View {
                 .background(color.opacity(0.1))
                 .cornerRadius(6)
         }
+        .buttonStyle(.plain)
     }
     
     private func loadServices() {

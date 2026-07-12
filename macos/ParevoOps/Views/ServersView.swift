@@ -28,25 +28,57 @@ public struct ServersView: View {
     }
     
     public var body: some View {
-        NavigationStack {
-            List {
-                Section(header: Text("Create Server Profile").font(.caption).foregroundColor(.zincSecondary)) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        // Connection info
-                        Group {
-                            TextField("Connection Name (e.g. AWS Production)", text: $name)
-                                .textFieldStyle(.plain)
-                                .padding(10)
-                                .background(Color.zincPanel)
-                                .cornerRadius(8)
-                            
-                            TextField("Host IP / Domain Address", text: $host)
-                                .textFieldStyle(.plain)
-                                .padding(10)
-                                .background(Color.zincPanel)
-                                .cornerRadius(8)
-                                .autocorrectionDisabled()
+        HSplitView {
+            // Left list panel
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Registered Server Nodes (\(servers.count))")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.horizontal)
+                
+                if servers.isEmpty {
+                    VStack {
+                        Spacer()
+                        Text("No remote server profiles configured. Use the right form to register your first host.")
+                            .font(.caption)
+                            .foregroundColor(.zincSecondary)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity)
+                } else {
+                    List {
+                        ForEach(servers) { srv in
+                            serverRowCard(srv)
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .padding(.vertical, 4)
                         }
+                        .onDelete(perform: deleteStoredServers)
+                    }
+                    .listStyle(.plain)
+                }
+            }
+            .frame(minWidth: 320, idealWidth: 360, maxWidth: 450)
+            .padding(.vertical)
+            
+            // Right configuration form
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Register Host Profile")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    
+                    VStack(alignment: .leading, spacing: 14) {
+                        TextField("Connection Name (e.g. AWS Production)", text: $name)
+                            .textFieldStyle(.roundedBorder)
+                        
+                        TextField("Host IP / Domain Address", text: $host)
+                            .textFieldStyle(.roundedBorder)
+                            .autocorrectionDisabled()
                         
                         // PEM Selector
                         VStack(alignment: .leading, spacing: 6) {
@@ -55,39 +87,32 @@ public struct ServersView: View {
                                 .foregroundColor(.zincSecondary)
                             
                             HStack {
-                                Text(privateKeyPath.isEmpty ? "No key selected..." : (privateKeyPath as NSString).lastPathComponent)
-                                    .font(.caption)
+                                Text(privateKeyPath.isEmpty ? "No key selected..." : privateKeyPath)
+                                    .font(.system(size: 11, design: .monospaced))
                                     .foregroundColor(privateKeyPath.isEmpty ? .zincSecondary : .white)
                                     .lineLimit(1)
                                 Spacer()
-                                Button(action: { showFilePicker = true }) {
-                                    Text("Browse...")
-                                        .font(.caption2)
-                                        .fontWeight(.bold)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Color.purple.opacity(0.15))
-                                        .cornerRadius(6)
+                                Button("Browse...") {
+                                    showFilePicker = true
                                 }
                                 if !privateKeyPath.isEmpty {
-                                    Button(action: { privateKeyPath = "" }) {
-                                        Text("Clear")
-                                            .font(.caption2)
-                                            .foregroundColor(.red)
+                                    Button("Clear") {
+                                        privateKeyPath = ""
                                     }
                                 }
                             }
-                            .padding(10)
+                            .padding(8)
                             .background(Color.zincPanel)
-                            .cornerRadius(8)
+                            .cornerRadius(6)
                         }
                         
                         // Advanced Config Toggle
                         Button(action: { withAnimation { showAdvanced.toggle() } }) {
-                          Text(showAdvanced ? "↓ Hide Advanced Settings" : "→ Show Advanced Settings (Port, Username, Group)")
-                              .font(.caption2)
-                              .foregroundColor(.purple)
+                            Text(showAdvanced ? "↓ Hide Advanced Settings" : "→ Show Advanced Settings (Port, Username, Group)")
+                                .font(.caption2)
+                                .foregroundColor(.purple)
                         }
+                        .buttonStyle(.plain)
                         
                         if showAdvanced {
                             advancedFields
@@ -105,9 +130,7 @@ public struct ServersView: View {
                             Button(action: runTestConnection) {
                                 HStack {
                                     if testingConnection {
-                                        ProgressView()
-                                            .tint(.white)
-                                            .scaleEffect(0.8)
+                                        ProgressView().scaleEffect(0.6).tint(.white)
                                     } else {
                                         Image(systemName: "shield.fill")
                                     }
@@ -117,11 +140,12 @@ public struct ServersView: View {
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
+                                .padding(.vertical, 8)
                                 .background(host.isEmpty ? Color.zincBorder : Color.zincSecondary.opacity(0.2))
                                 .cornerRadius(8)
                             }
                             .disabled(host.isEmpty || testingConnection)
+                            .buttonStyle(.plain)
                             
                             Button(action: saveServerProfile) {
                                 Text("Save Server")
@@ -129,45 +153,31 @@ public struct ServersView: View {
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 10)
+                                    .padding(.vertical, 8)
                                     .background(name.isEmpty || host.isEmpty ? Color.zincBorder : Color.purple)
                                     .cornerRadius(8)
                             }
                             .disabled(name.isEmpty || host.isEmpty)
+                            .buttonStyle(.plain)
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(20)
+                    .background(Color.zincPanel.opacity(0.3))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.zincBorder, lineWidth: 1)
+                    )
                 }
-                .listRowBackground(Color.zincPanel.opacity(0.4))
-                .listRowSeparator(.hidden)
-                
-                Section(header: Text("Stored Nodes").font(.caption).foregroundColor(.zincSecondary)) {
-                    if servers.isEmpty {
-                        Text("No remote server profiles configured.")
-                            .font(.caption)
-                            .foregroundColor(.zincSecondary)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 20)
-                    } else {
-                        ForEach(servers) { srv in
-                            serverRowCard(srv)
-                                .listRowInsets(EdgeInsets())
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
-                        }
-                        .onDelete(perform: deleteStoredServers)
-                    }
-                }
+                .padding(24)
             }
-            .navigationTitle("Servers")
-            .background(Color(red: 0.03, green: 0.03, blue: 0.05))
-            .fileImporter(isPresented: $showFilePicker, allowedContentTypes: [.item]) { result in
-                switch result {
-                case .success(let url):
-                    privateKeyPath = url.path
-                case .failure(let err):
-                    print("Error picking file: \(err)")
-                }
+        }
+        .fileImporter(isPresented: $showFilePicker, allowedContentTypes: [.item]) { result in
+            switch result {
+            case .success(let url):
+                privateKeyPath = url.path
+            case .failure(let err):
+                print("Error picking file: \(err)")
             }
         }
     }
@@ -180,9 +190,8 @@ public struct ServersView: View {
                     .foregroundColor(.zincSecondary)
                 Spacer()
                 TextField("ubuntu", text: $username)
-                    .textFieldStyle(.plain)
-                    .multilineTextAlignment(.trailing)
-                    .foregroundColor(.white)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 150)
             }
             
             HStack {
@@ -191,17 +200,14 @@ public struct ServersView: View {
                     .foregroundColor(.zincSecondary)
                 Spacer()
                 TextField("22", value: $port, formatter: NumberFormatter())
-                    .textFieldStyle(.plain)
-                    .keyboardType(.numberPad)
-                    .multilineTextAlignment(.trailing)
-                    .foregroundColor(.white)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 150)
             }
             
             Picker("Environment", selection: $groupName) {
                 Text("Production").tag("production")
                 Text("Staging").tag("staging")
                 Text("Development").tag("development")
-                Text("Monitoring").tag("monitoring")
             }
             .pickerStyle(.segmented)
         }
@@ -213,18 +219,18 @@ public struct ServersView: View {
     private var sandboxConsole: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("$ ssh -i \(privateKeyPath.isEmpty ? "default" : (privateKeyPath as NSString).lastPathComponent) \(username)@\(host.isEmpty ? "host" : host) -p \(port)")
-                .font(.system(.caption2, design: .monospaced))
+                .font(.system(.caption, design: .monospaced))
                 .foregroundColor(.zincSecondary)
             
             if testingConnection {
                 Text("CONNECTING... AUTHENTICATING SEQUENCE ACTIVE")
-                    .font(.system(.caption2, design: .monospaced))
+                    .font(.system(.caption, design: .monospaced))
                     .foregroundColor(.purple)
             }
             
             if let msg = testResult {
                 Text(msg)
-                    .font(.system(.caption2, design: .monospaced))
+                    .font(.system(.caption, design: .monospaced))
                     .foregroundColor(testSuccess ? .emerald : .red)
                     .fontWeight(.bold)
             }
@@ -258,18 +264,18 @@ public struct ServersView: View {
                 Text("\(srv.username)@\(srv.host):\(srv.port)")
                     .font(.system(.caption2, design: .monospaced))
                     .foregroundColor(.zincSecondary)
-                
-                if let key = srv.privateKeyPath {
-                    Text("Key: \((key as NSString).lastPathComponent)")
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundColor(.zincSecondary)
-                }
             }
             Spacer()
             
-            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(isSelected ? .emerald : .zincBorder)
-                .font(.title2)
+            Button(action: {
+                if let idx = servers.firstIndex(where: { $0.id == srv.id }) {
+                    deleteStoredServers(offsets: IndexSet(integer: idx))
+                }
+            }) {
+                Image(systemName: "trash")
+                    .foregroundColor(.red.opacity(0.7))
+            }
+            .buttonStyle(.plain)
         }
         .padding()
         .background(Color.zincPanel)
@@ -279,7 +285,6 @@ public struct ServersView: View {
                 .stroke(isSelected ? Color.emerald.opacity(0.5) : Color.zincBorder, lineWidth: 1)
         )
         .padding(.horizontal)
-        .padding(.vertical, 4)
         .contentShape(Rectangle())
         .onTapGesture {
             activeServer = srv

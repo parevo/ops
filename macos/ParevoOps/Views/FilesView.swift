@@ -14,32 +14,87 @@ public struct FilesView: View {
     }
     
     public var body: some View {
-        NavigationStack {
-            List {
-                Section(header: pathHeader) {
+        HSplitView {
+            // Left Folder Browser
+            VStack(alignment: .leading, spacing: 0) {
+                pathHeader
+                    .padding()
+                    .background(Color.black.opacity(0.15))
+                
+                List {
                     if files.isEmpty {
                         Text("Empty directory.")
                             .font(.caption)
                             .foregroundColor(.zincSecondary)
                             .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 20)
                     } else {
                         ForEach(files) { item in
                             fileRowCard(item)
                                 .listRowInsets(EdgeInsets())
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
+                                .padding(.vertical, 4)
                         }
                     }
                 }
+                .listStyle(.plain)
             }
-            .navigationTitle("Files")
-            .background(Color(red: 0.03, green: 0.03, blue: 0.05))
-            .onAppear(perform: { loadPath(currentPath) })
-            .onChange(of: activeServer, perform: { _ in loadPath("/") })
-            .sheet(item: $editingFile) { file in
-                fileEditorSheet(file)
+            .frame(minWidth: 260, idealWidth: 320, maxWidth: 450)
+            
+            // Right File Editor View
+            VStack(spacing: 0) {
+                if let file = editingFile {
+                    HStack {
+                        Image(systemName: "doc.text.fill")
+                            .foregroundColor(.zincSecondary)
+                        Text(file.path)
+                            .font(.system(.caption, design: .monospaced))
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                        Spacer()
+                        Button(action: saveFile) {
+                            Text("Save File")
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 4)
+                                .background(Color.purple)
+                                .cornerRadius(6)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding()
+                    .background(Color.zincPanel)
+                    
+                    TextEditor(text: $fileContent)
+                        .font(.system(.subheadline, design: .monospaced))
+                        .foregroundColor(.white)
+                        .padding(12)
+                        .background(Color.black)
+                } else {
+                    VStack(spacing: 12) {
+                        Image(systemName: "folder.badge.gearshape")
+                            .font(.system(size: 48))
+                            .foregroundColor(.zincBorder)
+                        Text("No File Opened")
+                            .font(.headline)
+                            .foregroundColor(.zincSecondary)
+                        Text("Select a file from the explorer pane to inspect its configurations.")
+                            .font(.caption)
+                            .foregroundColor(.zincSecondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
+            .frame(minWidth: 400, idealWidth: 500)
+            .background(Color.black.opacity(0.4))
         }
+        .navigationTitle("Files")
+        .onAppear(perform: { loadPath(currentPath) })
+        .onChange(of: activeServer, perform: { _ in loadPath("/") })
     }
     
     private var pathHeader: some View {
@@ -47,21 +102,20 @@ public struct FilesView: View {
             Text(currentPath)
                 .font(.system(.caption, design: .monospaced))
                 .foregroundColor(.purple)
+                .lineLimit(1)
             Spacer()
             if currentPath != "/" {
-                Button(action: goUpDirectory) {
-                    Text(".. Go Up")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.zincSecondary)
+                Button(".. Up") {
+                    goUpDirectory()
                 }
             }
         }
-        .padding(.vertical, 4)
     }
     
     private func fileRowCard(_ item: FileEntryMock) -> some View {
-        HStack {
+        let isEditingThis = editingFile?.path == item.path
+        
+        return HStack {
             Image(systemName: item.isDir ? "folder.fill" : "doc.text.fill")
                 .foregroundColor(item.isDir ? .purple : .zincSecondary)
                 .font(.title3)
@@ -70,8 +124,8 @@ public struct FilesView: View {
                 Text(item.name)
                     .font(.body)
                     .foregroundColor(.white)
-                Text("\(item.permissions) • \(item.size) Bytes")
-                    .font(.system(size: 10, design: .monospaced))
+                Text("\(item.permissions) • \(item.size) B")
+                    .font(.system(size: 9, design: .monospaced))
                     .foregroundColor(.zincSecondary)
             }
             Spacer()
@@ -79,50 +133,19 @@ public struct FilesView: View {
                 .foregroundColor(.zincBorder)
                 .font(.caption)
         }
-        .padding()
-        .background(Color.zincPanel)
-        .cornerRadius(10)
+        .padding(10)
+        .background(isEditingThis ? Color.purple.opacity(0.1) : Color.zincPanel)
+        .cornerRadius(8)
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.zincBorder, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(isEditingThis ? Color.purple.opacity(0.4) : Color.zincBorder, lineWidth: 1)
         )
-        .padding(.horizontal)
-        .padding(.vertical, 4)
         .contentShape(Rectangle())
         .onTapGesture {
             if item.isDir {
                 loadPath(item.path)
             } else {
                 openFile(item)
-            }
-        }
-    }
-    
-    private func fileEditorSheet(_ file: FileEntryMock) -> some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                TextEditor(text: $fileContent)
-                    .font(.system(.subheadline, design: .monospaced))
-                    .padding()
-                    .background(Color.zincPanel)
-                    .foregroundColor(.white)
-            }
-            .navigationTitle(file.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .background(Color.zincPanel)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        editingFile = nil
-                    }
-                    .foregroundColor(.zincSecondary)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveFile()
-                    }
-                    .foregroundColor(.purple)
-                }
             }
         }
     }
@@ -163,7 +186,7 @@ public struct FilesView: View {
         fileContent = """
         # Parevo Config File for \(nameSuffix) Node
         # Path: \(item.path)
-        # Modified locally on iOS Client
+        # Modified locally on macOS Swift Client
         
         SERVER_PORT=8080
         LOG_LEVEL=debug

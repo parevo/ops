@@ -11,69 +11,73 @@ public struct AiAssistantView: View {
     }
     
     public var body: some View {
-        NavigationStack {
+        HSplitView {
+            // Left Input panel
+            VStack(alignment: .leading, spacing: 20) {
+                sreContextBanner
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Query or Diagnostic Command")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.zincSecondary)
+                        .textCase(.uppercase)
+                    
+                    TextField("Enter query, e.g. Why did postgres fail?", text: $query)
+                        .textFieldStyle(.roundedBorder)
+                        .foregroundColor(.white)
+                    
+                    Button(action: runAiDiagnostics) {
+                        HStack {
+                            if loading {
+                                ProgressView().scaleEffect(0.6).tint(.white)
+                            } else {
+                                Image(systemName: "sparkles")
+                            }
+                            Text(loading ? "AI Running Diagnostics..." : "Analyze Diagnostics")
+                        }
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(query.isEmpty || loading ? Color.zincBorder : Color.purple)
+                        .cornerRadius(6)
+                    }
+                    .disabled(query.isEmpty || loading)
+                    .buttonStyle(.plain)
+                }
+                .padding(16)
+                .background(Color.zincPanel.opacity(0.3))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.zincBorder, lineWidth: 1)
+                )
+                
+                Spacer()
+            }
+            .frame(minWidth: 320, idealWidth: 360, maxWidth: 450)
+            .padding(24)
+            
+            // Right Results panel
             ScrollView {
                 VStack(spacing: 20) {
-                    // Header SRE context banner
-                    sreContextBanner
-                    
-                    // Input prompt area
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Query or Diagnostic Command")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(.zincSecondary)
-                            .textCase(.uppercase)
-                        
-                        TextField("Enter query, e.g. Why did api-worker fail?", text: $query)
-                            .textFieldStyle(.plain)
-                            .padding(12)
-                            .background(Color.zincPanel)
-                            .cornerRadius(8)
-                            .foregroundColor(.white)
-                            .autocorrectionDisabled()
-                        
-                        Button(action: runAiDiagnostics) {
-                            HStack {
-                                if loading {
-                                    ProgressView()
-                                        .tint(.white)
-                                } else {
-                                    Image(systemName: "sparkles")
-                                }
-                                Text(loading ? "AI Running Diagnostics..." : "Analyze Diagnostics")
-                            }
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(query.isEmpty || loading ? Color.zincBorder : Color.purple)
-                            .cornerRadius(8)
-                        }
-                        .disabled(query.isEmpty || loading)
-                    }
-                    .padding()
-                    .background(Color.zincPanel.opacity(0.5))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.zincBorder, lineWidth: 1)
-                    )
-                    
-                    // Results Card
                     if let result = report {
                         diagnosticReportCard(result)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     } else if loading {
                         analyzingLoaderCard
+                    } else {
+                        noReportPlaceholder
                     }
                 }
-                .padding()
+                .padding(24)
             }
-            .navigationTitle("AI Assistant")
-            .background(Color(red: 0.03, green: 0.03, blue: 0.05))
+            .frame(minWidth: 400, idealWidth: 500)
+            .background(Color.black.opacity(0.15))
         }
+        .navigationTitle("AI Assistant")
     }
     
     private var sreContextBanner: some View {
@@ -87,7 +91,7 @@ public struct AiAssistantView: View {
                 .font(.caption)
                 .foregroundColor(.zincSecondary)
         }
-        .padding()
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.zincPanel)
         .cornerRadius(12)
@@ -98,23 +102,22 @@ public struct AiAssistantView: View {
     }
     
     private func diagnosticReportCard(_ item: DiagnosticReport) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             // Header confidence bar
             HStack {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.shield.fill")
                         .foregroundColor(.emerald)
                     Text("Analysis Completed")
-                        .font(.caption)
-                        .fontWeight(.bold)
+                        .font(.headline)
                         .foregroundColor(.white)
                 }
                 Spacer()
                 Text(String(format: "Confidence: %.0f%%", item.confidence * 100))
-                    .font(.caption2)
+                    .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(.purple)
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(Color.purple.opacity(0.15))
                     .cornerRadius(6)
@@ -131,7 +134,7 @@ public struct AiAssistantView: View {
                     .foregroundColor(.zincSecondary)
                     .textCase(.uppercase)
                 Text(item.rootCause)
-                    .font(.subheadline)
+                    .font(.body)
                     .foregroundColor(.white)
             }
             
@@ -143,11 +146,11 @@ public struct AiAssistantView: View {
                     .foregroundColor(.zincSecondary)
                     .textCase(.uppercase)
                 Text(item.evidence)
-                    .font(.system(.caption, design: .monospaced))
+                    .font(.system(.subheadline, design: .monospaced))
                     .foregroundColor(.zincSecondary)
-                    .padding(10)
+                    .padding(12)
                     .background(Color.black.opacity(0.4))
-                    .cornerRadius(6)
+                    .cornerRadius(8)
             }
             
             // Suggested Fix
@@ -158,11 +161,12 @@ public struct AiAssistantView: View {
                     .foregroundColor(.zincSecondary)
                     .textCase(.uppercase)
                 Text(item.suggestedFix)
-                    .font(.subheadline)
+                    .font(.body)
                     .foregroundColor(.purple)
+                    .fontWeight(.semibold)
             }
         }
-        .padding()
+        .padding(24)
         .background(Color.zincPanel)
         .cornerRadius(12)
         .overlay(
@@ -180,7 +184,7 @@ public struct AiAssistantView: View {
                 .font(.caption)
                 .foregroundColor(.zincSecondary)
         }
-        .padding(30)
+        .padding(40)
         .frame(maxWidth: .infinity)
         .background(Color.zincPanel)
         .cornerRadius(12)
@@ -188,6 +192,23 @@ public struct AiAssistantView: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.zincBorder, lineWidth: 1)
         )
+    }
+    
+    private var noReportPlaceholder: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 48))
+                .foregroundColor(.zincBorder)
+            Text("AI Diagnostics Pending")
+                .font(.headline)
+                .foregroundColor(.zincSecondary)
+            Text("Submit a query in the left panel to scan your server nodes for warnings.")
+                .font(.caption)
+                .foregroundColor(.zincSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.vertical, 80)
     }
     
     private func runAiDiagnostics() {
