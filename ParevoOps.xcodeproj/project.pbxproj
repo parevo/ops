@@ -1,0 +1,360 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile */
+		F5B0AD7927F445392064E5D0 /* AppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0D6AF073E45EF8A474599 /* AppSession.swift */; };
+		F5B0ADC4488F19DBF0809626 /* ParevoOpsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0EFBC4DF3FFE83A048F35 /* ParevoOpsApp.swift */; };
+		F5B01BA664823FF24E4DE394 /* DependencyContainer+Register.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B01DA2AE6ADCBC8FD3E6AF /* DependencyContainer+Register.swift */; };
+		F5B04C021E180677C45C4095 /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B02F35369429658B1C2CE6 /* DependencyContainer.swift */; };
+		F5B09F8680189313E282626C /* BrandColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B08BA43981CE60FD0611E0 /* BrandColor.swift */; };
+		F5B05339645461C27BA3AD23 /* BrandSpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B09D431F3358CA6E22AFA1 /* BrandSpacing.swift */; };
+		F5B00A6CB671D77AFFD4B0E2 /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0AE073C1FCA5E173B91C1 /* GlassCard.swift */; };
+		F5B052F510D1214CF9BB1398 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B01C8600A9647535EB11A4 /* Theme.swift */; };
+		F5B0A0A73E8C10076586C6BA /* OpsError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0BBDBC3DF528C679E8106 /* OpsError.swift */; };
+		F5B05B53AF5978BAE9238DAB /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B07B45C68E7F2FD1D976BD /* KeychainService.swift */; };
+		F5B0A652B7E86FE355ED75B1 /* CronModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B04D03362F84474FA3CDD0 /* CronModels.swift */; };
+		F5B0BE33BE88156D8476A63A /* DockerModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B00C28B16F8632B97A98A2 /* DockerModels.swift */; };
+		F5B01EA82D7708CC2E264FBF /* FileModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0BFDEFEDCC99D9CDBB06D /* FileModels.swift */; };
+		F5B0E28D42D8D1C6460ADB92 /* OpsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0C71A77F590251CE09A86 /* OpsModels.swift */; };
+		F5B07BAD14803F0D0CBF3082 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0A470726FC11DDF68435F /* Project.swift */; };
+		F5B048D4FB808F71EB28FF08 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B00F2D59E31A60ED88B29C /* Server.swift */; };
+		F5B07205D9661E3B45656639 /* ServerProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0E35F9B6406E81C4607C8 /* ServerProvider.swift */; };
+		F5B06BDFE44185FFA8B29C8C /* SystemMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0325457DD1324F7861F88 /* SystemMetrics.swift */; };
+		F5B0076E711B54635E544A8D /* CronService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0498F4211AE1CB3DC8582 /* CronService.swift */; };
+		F5B0AAECC0CFCCCFAA6CCD6F /* DeployService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0CEE8B5DD8B49E2D664B1 /* DeployService.swift */; };
+		F5B0C02772EDF2938ECB9D73 /* DockerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0AD3838264ED1582176FD /* DockerService.swift */; };
+		F5B0DFF6D3359B1D1A7EB7BA /* FileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0305F5F0AC85F9B3646F1 /* FileService.swift */; };
+		F5B056FB00E0E10B4CEB3F84 /* LogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0331F746442B665731FE7 /* LogService.swift */; };
+		F5B0D7C68E4A30036B507CF9 /* MemoryEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B09471AC0D70D5B0B3F2B8 /* MemoryEngine.swift */; };
+		F5B01A49E125F209A8BAB023 /* MetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0D24021DB8B1F6890C68E /* MetricsService.swift */; };
+		F5B0B5BC98F67C201150D1D8 /* ServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B093405FE983AA67B63B23 /* ServiceProtocols.swift */; };
+		F5B0F6975E9351C23FBC5DC3 /* SSHService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B082BF65117439BEED7233 /* SSHService.swift */; };
+		F5B04F346FCF8DBD59A6194A /* SystemdService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B02F8062E1719A22370544 /* SystemdService.swift */; };
+		F5B00471F9E5C0C8DF0BF178 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B043FE79B7120123D4F3D8 /* ContentView.swift */; };
+		F5B0DDDD9459B28E3DA44E56 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B06C153F314998E4B815E7 /* DashboardView.swift */; };
+		F5B0FF292F1D59C43AABBFD8 /* ModuleViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0BDBDF7ED3978892FCB78 /* ModuleViews.swift */; };
+		F5B038EF671CF1A997C21DFE /* ServersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B03F2889166848A45AC04E /* ServersView.swift */; };
+		F5B0DF3E33EB60F6F49667BC /* SidebarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B00357411D0486E585B50E /* SidebarItem.swift */; };
+		F5B087B3B23297D53CC6224C /* TerminalPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B00656EE90AB37F3A4ED1D /* TerminalPanel.swift */; };
+/* End PBXBuildFile */
+
+/* Begin PBXFileReference */
+		F5B04E80E2C02B2E48D8957C /* ParevoOps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ParevoOps.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F5B0D6AF073E45EF8A474599 /* AppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/App/AppSession.swift"; sourceTree = "<group>"; };
+		F5B0EFBC4DF3FFE83A048F35 /* ParevoOpsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/App/ParevoOpsApp.swift"; sourceTree = "<group>"; };
+		F5B01DA2AE6ADCBC8FD3E6AF /* DependencyContainer+Register.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/DI/DependencyContainer+Register.swift"; sourceTree = "<group>"; };
+		F5B02F35369429658B1C2CE6 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/DI/DependencyContainer.swift"; sourceTree = "<group>"; };
+		F5B08BA43981CE60FD0611E0 /* BrandColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/DesignSystem/BrandColor.swift"; sourceTree = "<group>"; };
+		F5B09D431F3358CA6E22AFA1 /* BrandSpacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/DesignSystem/BrandSpacing.swift"; sourceTree = "<group>"; };
+		F5B0AE073C1FCA5E173B91C1 /* GlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/DesignSystem/Components/GlassCard.swift"; sourceTree = "<group>"; };
+		F5B01C8600A9647535EB11A4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/DesignSystem/Theme.swift"; sourceTree = "<group>"; };
+		F5B0BBDBC3DF528C679E8106 /* OpsError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/Errors/OpsError.swift"; sourceTree = "<group>"; };
+		F5B07B45C68E7F2FD1D976BD /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/Security/KeychainService.swift"; sourceTree = "<group>"; };
+		F5B04D03362F84474FA3CDD0 /* CronModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Models/CronModels.swift"; sourceTree = "<group>"; };
+		F5B00C28B16F8632B97A98A2 /* DockerModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Models/DockerModels.swift"; sourceTree = "<group>"; };
+		F5B0BFDEFEDCC99D9CDBB06D /* FileModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Models/FileModels.swift"; sourceTree = "<group>"; };
+		F5B0C71A77F590251CE09A86 /* OpsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Models/OpsModels.swift"; sourceTree = "<group>"; };
+		F5B0A470726FC11DDF68435F /* Project.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Models/Project.swift"; sourceTree = "<group>"; };
+		F5B00F2D59E31A60ED88B29C /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Models/Server.swift"; sourceTree = "<group>"; };
+		F5B0E35F9B6406E81C4607C8 /* ServerProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Models/ServerProvider.swift"; sourceTree = "<group>"; };
+		F5B0325457DD1324F7861F88 /* SystemMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Models/SystemMetrics.swift"; sourceTree = "<group>"; };
+		F5B0498F4211AE1CB3DC8582 /* CronService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/Cron/CronService.swift"; sourceTree = "<group>"; };
+		F5B0CEE8B5DD8B49E2D664B1 /* DeployService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/Deploy/DeployService.swift"; sourceTree = "<group>"; };
+		F5B0AD3838264ED1582176FD /* DockerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/Docker/DockerService.swift"; sourceTree = "<group>"; };
+		F5B0305F5F0AC85F9B3646F1 /* FileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/File/FileService.swift"; sourceTree = "<group>"; };
+		F5B0331F746442B665731FE7 /* LogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/Log/LogService.swift"; sourceTree = "<group>"; };
+		F5B09471AC0D70D5B0B3F2B8 /* MemoryEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/Memory/MemoryEngine.swift"; sourceTree = "<group>"; };
+		F5B0D24021DB8B1F6890C68E /* MetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/Metrics/MetricsService.swift"; sourceTree = "<group>"; };
+		F5B093405FE983AA67B63B23 /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/Protocols/ServiceProtocols.swift"; sourceTree = "<group>"; };
+		F5B082BF65117439BEED7233 /* SSHService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/SSH/SSHService.swift"; sourceTree = "<group>"; };
+		F5B02F8062E1719A22370544 /* SystemdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/Systemd/SystemdService.swift"; sourceTree = "<group>"; };
+		F5B043FE79B7120123D4F3D8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/ContentView.swift"; sourceTree = "<group>"; };
+		F5B06C153F314998E4B815E7 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Dashboard/DashboardView.swift"; sourceTree = "<group>"; };
+		F5B0BDBDF7ED3978892FCB78 /* ModuleViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Modules/ModuleViews.swift"; sourceTree = "<group>"; };
+		F5B03F2889166848A45AC04E /* ServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Servers/ServersView.swift"; sourceTree = "<group>"; };
+		F5B00357411D0486E585B50E /* SidebarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Shared/SidebarItem.swift"; sourceTree = "<group>"; };
+		F5B00656EE90AB37F3A4ED1D /* TerminalPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Terminal/TerminalPanel.swift"; sourceTree = "<group>"; };
+/* End PBXFileReference */
+
+/* Begin PBXFrameworksBuildPhase */
+		F5B00DCBC39C7F4EE777C5CF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase */
+
+/* Begin PBXGroup */
+		F5B01F0CDB6334BEA1115747 = {
+			isa = PBXGroup;
+			children = (
+				F5B0C2F4C67AC237133713F6 /* Sources */,
+				F5B027B9B3C8D6F0354892F6 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F5B027B9B3C8D6F0354892F6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F5B04E80E2C02B2E48D8957C /* ParevoOps.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F5B0C2F4C67AC237133713F6 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				F5B0D6AF073E45EF8A474599 /* AppSession.swift */,
+				F5B0EFBC4DF3FFE83A048F35 /* ParevoOpsApp.swift */,
+				F5B01DA2AE6ADCBC8FD3E6AF /* DependencyContainer+Register.swift */,
+				F5B02F35369429658B1C2CE6 /* DependencyContainer.swift */,
+				F5B08BA43981CE60FD0611E0 /* BrandColor.swift */,
+				F5B09D431F3358CA6E22AFA1 /* BrandSpacing.swift */,
+				F5B0AE073C1FCA5E173B91C1 /* GlassCard.swift */,
+				F5B01C8600A9647535EB11A4 /* Theme.swift */,
+				F5B0BBDBC3DF528C679E8106 /* OpsError.swift */,
+				F5B07B45C68E7F2FD1D976BD /* KeychainService.swift */,
+				F5B04D03362F84474FA3CDD0 /* CronModels.swift */,
+				F5B00C28B16F8632B97A98A2 /* DockerModels.swift */,
+				F5B0BFDEFEDCC99D9CDBB06D /* FileModels.swift */,
+				F5B0C71A77F590251CE09A86 /* OpsModels.swift */,
+				F5B0A470726FC11DDF68435F /* Project.swift */,
+				F5B00F2D59E31A60ED88B29C /* Server.swift */,
+				F5B0E35F9B6406E81C4607C8 /* ServerProvider.swift */,
+				F5B0325457DD1324F7861F88 /* SystemMetrics.swift */,
+				F5B0498F4211AE1CB3DC8582 /* CronService.swift */,
+				F5B0CEE8B5DD8B49E2D664B1 /* DeployService.swift */,
+				F5B0AD3838264ED1582176FD /* DockerService.swift */,
+				F5B0305F5F0AC85F9B3646F1 /* FileService.swift */,
+				F5B0331F746442B665731FE7 /* LogService.swift */,
+				F5B09471AC0D70D5B0B3F2B8 /* MemoryEngine.swift */,
+				F5B0D24021DB8B1F6890C68E /* MetricsService.swift */,
+				F5B093405FE983AA67B63B23 /* ServiceProtocols.swift */,
+				F5B082BF65117439BEED7233 /* SSHService.swift */,
+				F5B02F8062E1719A22370544 /* SystemdService.swift */,
+				F5B043FE79B7120123D4F3D8 /* ContentView.swift */,
+				F5B06C153F314998E4B815E7 /* DashboardView.swift */,
+				F5B0BDBDF7ED3978892FCB78 /* ModuleViews.swift */,
+				F5B03F2889166848A45AC04E /* ServersView.swift */,
+				F5B00357411D0486E585B50E /* SidebarItem.swift */,
+				F5B00656EE90AB37F3A4ED1D /* TerminalPanel.swift */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup */
+
+/* Begin PBXNativeTarget */
+		F5B0ACB60ECD54C78D5036BA /* ParevoOps */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F5B0FA3E3883E4B4A66E8659 /* Build configuration list for PBXNativeTarget "ParevoOps" */;
+			buildPhases = (
+				F5B0E20C9BE79F6CBEBFE6CE /* Sources */,
+				F5B00DCBC39C7F4EE777C5CF /* Frameworks */,
+				F5B0D331F827D46063D7B903 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ParevoOps;
+			productName = ParevoOps;
+			productReference = F5B04E80E2C02B2E48D8957C /* ParevoOps.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget */
+
+/* Begin PBXProject */
+		F5B0858D06C69D166E356FB4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					F5B0ACB60ECD54C78D5036BA = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = F5B04B2380CA9135CE36448D /* Build configuration list for PBXProject "ParevoOps" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = F5B01F0CDB6334BEA1115747;
+			productRefGroup = F5B027B9B3C8D6F0354892F6 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F5B0ACB60ECD54C78D5036BA /* ParevoOps */,
+			);
+		};
+/* End PBXProject */
+
+/* Begin PBXResourcesBuildPhase */
+		F5B0D331F827D46063D7B903 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase */
+
+/* Begin PBXSourcesBuildPhase */
+		F5B0E20C9BE79F6CBEBFE6CE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F5B0AD7927F445392064E5D0 /* AppSession.swift in Sources */,
+				F5B0ADC4488F19DBF0809626 /* ParevoOpsApp.swift in Sources */,
+				F5B01BA664823FF24E4DE394 /* DependencyContainer+Register.swift in Sources */,
+				F5B04C021E180677C45C4095 /* DependencyContainer.swift in Sources */,
+				F5B09F8680189313E282626C /* BrandColor.swift in Sources */,
+				F5B05339645461C27BA3AD23 /* BrandSpacing.swift in Sources */,
+				F5B00A6CB671D77AFFD4B0E2 /* GlassCard.swift in Sources */,
+				F5B052F510D1214CF9BB1398 /* Theme.swift in Sources */,
+				F5B0A0A73E8C10076586C6BA /* OpsError.swift in Sources */,
+				F5B05B53AF5978BAE9238DAB /* KeychainService.swift in Sources */,
+				F5B0A652B7E86FE355ED75B1 /* CronModels.swift in Sources */,
+				F5B0BE33BE88156D8476A63A /* DockerModels.swift in Sources */,
+				F5B01EA82D7708CC2E264FBF /* FileModels.swift in Sources */,
+				F5B0E28D42D8D1C6460ADB92 /* OpsModels.swift in Sources */,
+				F5B07BAD14803F0D0CBF3082 /* Project.swift in Sources */,
+				F5B048D4FB808F71EB28FF08 /* Server.swift in Sources */,
+				F5B07205D9661E3B45656639 /* ServerProvider.swift in Sources */,
+				F5B06BDFE44185FFA8B29C8C /* SystemMetrics.swift in Sources */,
+				F5B0076E711B54635E544A8D /* CronService.swift in Sources */,
+				F5B0AAECC0CFCCCFAA6CCD6F /* DeployService.swift in Sources */,
+				F5B0C02772EDF2938ECB9D73 /* DockerService.swift in Sources */,
+				F5B0DFF6D3359B1D1A7EB7BA /* FileService.swift in Sources */,
+				F5B056FB00E0E10B4CEB3F84 /* LogService.swift in Sources */,
+				F5B0D7C68E4A30036B507CF9 /* MemoryEngine.swift in Sources */,
+				F5B01A49E125F209A8BAB023 /* MetricsService.swift in Sources */,
+				F5B0B5BC98F67C201150D1D8 /* ServiceProtocols.swift in Sources */,
+				F5B0F6975E9351C23FBC5DC3 /* SSHService.swift in Sources */,
+				F5B04F346FCF8DBD59A6194A /* SystemdService.swift in Sources */,
+				F5B00471F9E5C0C8DF0BF178 /* ContentView.swift in Sources */,
+				F5B0DDDD9459B28E3DA44E56 /* DashboardView.swift in Sources */,
+				F5B0FF292F1D59C43AABBFD8 /* ModuleViews.swift in Sources */,
+				F5B038EF671CF1A997C21DFE /* ServersView.swift in Sources */,
+				F5B0DF3E33EB60F6F49667BC /* SidebarItem.swift in Sources */,
+				F5B087B3B23297D53CC6224C /* TerminalPanel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase */
+
+/* Begin XCBuildConfiguration */
+		F5B0B79345345B5686866647 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		F5B0E8694EC4C7FF4063F5D0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		F5B0123456789ABCDEF00001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.parevo.ops;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F5B0123456789ABCDEF00002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.parevo.ops;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration */
+
+/* Begin XCConfigurationList */
+		F5B04B2380CA9135CE36448D /* Build configuration list for PBXProject "ParevoOps" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5B0B79345345B5686866647 /* Debug */,
+				F5B0E8694EC4C7FF4063F5D0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F5B0FA3E3883E4B4A66E8659 /* Build configuration list for PBXNativeTarget "ParevoOps" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5B0123456789ABCDEF00001 /* Debug */,
+				F5B0123456789ABCDEF00002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList */
+	};
+	rootObject = F5B0858D06C69D166E356FB4 /* Project object */;
+}
