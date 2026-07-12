@@ -1,0 +1,13 @@
+[package]
+name = "parevo-logs"
+version = "0.1.0"
+edition = "2021"
+description = "Log processing and streaming engine for Parevo Ops"
+
+[dependencies]
+parevo-common = { workspace = true }
+parevo-events = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+chrono = { workspace = true }

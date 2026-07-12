@@ -1,0 +1,12 @@
+[package]
+name = "parevo-config"
+version = "0.1.0"
+edition = "2021"
+description = "App-wide TOML configuration loading and writing for Parevo Ops"
+
+[dependencies]
+parevo-common = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["fs", "io-util"] }

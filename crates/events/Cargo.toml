@@ -1,0 +1,13 @@
+[package]
+name = "parevo-events"
+version = "0.1.0"
+edition = "2021"
+description = "In-memory event bus and event definitions for Parevo Ops"
+
+[dependencies]
+parevo-common = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }

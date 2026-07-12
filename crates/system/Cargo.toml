@@ -1,0 +1,11 @@
+[package]
+name = "parevo-system"
+version = "0.1.0"
+edition = "2021"
+description = "Linux systemctl and OS commands executor for Parevo Ops"
+
+[dependencies]
+parevo-common = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }

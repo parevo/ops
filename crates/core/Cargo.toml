@@ -1,0 +1,24 @@
+[package]
+name = "parevo-core"
+version = "0.1.0"
+edition = "2021"
+description = "Central business services orchestrator for Parevo Ops"
+
+[dependencies]
+parevo-common = { workspace = true }
+parevo-events = { workspace = true }
+parevo-config = { workspace = true }
+parevo-database = { workspace = true }
+parevo-ssh = { workspace = true }
+parevo-docker = { workspace = true }
+parevo-system = { workspace = true }
+parevo-files = { workspace = true }
+parevo-logs = { workspace = true }
+parevo-terminal = { workspace = true }
+parevo-metrics = { workspace = true }
+parevo-ai = { workspace = true }
+parevo-plugins = { workspace = true }
+
+tokio = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }

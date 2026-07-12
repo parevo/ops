@@ -1,0 +1,12 @@
+[package]
+name = "parevo-docker"
+version = "0.1.0"
+edition = "2021"
+description = "Docker Engine API client integration for Parevo Ops"
+
+[dependencies]
+parevo-common = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+bollard = { workspace = true }

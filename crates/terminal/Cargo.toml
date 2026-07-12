@@ -1,0 +1,13 @@
+[package]
+name = "parevo-terminal"
+version = "0.1.0"
+edition = "2021"
+description = "Integrated PTY terminal sessions and execution manager for Parevo Ops"
+
+[dependencies]
+parevo-common = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+portable-pty = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
