@@ -58,7 +58,7 @@ public final class NotificationService: NotificationServiceProtocol, @unchecked 
 
     public func post(alert: OpsAlert) async {
         let content = UNMutableNotificationContent()
-        content.title = "Parevo Ops · \(alert.kind.title)"
+        content.title = "Ops · \(alert.kind.title)"
         content.body = alert.message
         content.sound = .default
         content.interruptionLevel = alert.value >= 95 ? .timeSensitive : .active

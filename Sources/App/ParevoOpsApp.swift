@@ -31,6 +31,16 @@ struct ParevoOpsApp: App {
         .defaultSize(width: 1280, height: 820)
         .commands {
             CommandGroup(after: .sidebar) {
+                Button("Command Palette") {
+                    session.showCommandPalette = true
+                }
+                .keyboardShortcut("k", modifiers: [.command])
+
+                Button("Interactive Shell") {
+                    session.openInteractiveShell()
+                }
+                .keyboardShortcut("t", modifiers: [.command, .shift])
+
                 Button("Toggle Terminal Panel") {
                     session.terminalVisible.toggle()
                 }

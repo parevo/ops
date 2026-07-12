@@ -2,108 +2,6 @@ import SwiftUI
 import SwiftData
 import Charts
 
-// MARK: - Projects
-
-struct ProjectsView: View {
-    @Query private var projects: [Project]
-    @Environment(\.modelContext) private var modelContext
-    @Environment(AppSession.self) private var session
-    @Query private var servers: [Server]
-    @State private var showCreate = false
-    @State private var name = ""
-    @State private var descriptionText = ""
-    @State private var directory = ""
-    @State private var deployLog = ""
-
-    var body: some View {
-        Group {
-            if projects.isEmpty {
-                ContentUnavailableView {
-                    Label("No Projects", systemImage: "folder.badge.gearshape")
-                } description: {
-                    Text("Projects group compose stacks, paths, and deployments.")
-                } actions: {
-                    Button("New Project") { showCreate = true }
-                }
-            } else {
-                List(projects) { project in
-                    VStack(alignment: .leading, spacing: BrandSpacing.small) {
-                        Label(project.name, systemImage: "folder.fill").font(.headline)
-                        Text(project.projectDescription).foregroundStyle(BrandColor.textSecondary)
-                        Text(project.directoryPath).font(.caption.monospaced()).foregroundStyle(BrandColor.textMuted)
-                        HStack {
-                            Button("Deploy") {
-                                Task { await deploy(project) }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            Button("Git History") {
-                                Task { await showHistory(project) }
-                            }
-                        }
-                        if !deployLog.isEmpty {
-                            Text(deployLog).font(.caption.monospaced()).textSelection(.enabled)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button { showCreate = true } label: { Label("New Project", systemImage: "plus") }
-            }
-        }
-        .sheet(isPresented: $showCreate) {
-            NavigationStack {
-                Form {
-                    TextField("Name", text: $name)
-                    TextField("Description", text: $descriptionText)
-                    TextField("Directory", text: $directory, prompt: Text("/var/www/app"))
-                }
-                .formStyle(.grouped)
-                .navigationTitle("New Project")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button("Cancel") { showCreate = false } }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Create") {
-                            modelContext.insert(Project(name: name, projectDescription: descriptionText, directoryPath: directory))
-                            showCreate = false
-                            name = ""; descriptionText = ""; directory = ""
-                        }
-                        .disabled(name.isEmpty || directory.isEmpty)
-                    }
-                }
-            }
-            .frame(minWidth: 420, minHeight: 280)
-        }
-    }
-
-    @MainActor
-    private func deploy(_ project: Project) async {
-        guard let info = session.connectionInfo(from: servers) else {
-            deployLog = OpsError.noActiveServer.localizedDescription
-            return
-        }
-        do {
-            deployLog = try await DependencyContainer.shared.resolve(DeployServiceProtocol.self)
-                .deploy(directory: project.directoryPath, on: info)
-        } catch {
-            deployLog = error.localizedDescription
-        }
-    }
-
-    @MainActor
-    private func showHistory(_ project: Project) async {
-        guard let info = session.connectionInfo(from: servers) else { return }
-        do {
-            deployLog = try await DependencyContainer.shared.resolve(DeployServiceProtocol.self)
-                .rollbackHint(directory: project.directoryPath, on: info)
-        } catch {
-            deployLog = error.localizedDescription
-        }
-    }
-}
-
 // MARK: - Docker modules
 
 struct ContainersView: View {
@@ -112,17 +10,22 @@ struct ContainersView: View {
     @State private var containers: [ContainerInfo] = []
     @State private var errorMessage: String?
     @State private var isLoading = false
+    @State private var selected: ContainerInfo?
 
     var body: some View {
         Group {
             if let errorMessage { Text(errorMessage).foregroundStyle(BrandColor.danger).padding() }
-            Table(containers) {
+            Table(containers, selection: Binding(
+                get: { selected.map { Set([$0.id]) } ?? [] },
+                set: { ids in selected = containers.first { ids.contains($0.id) } }
+            )) {
                 TableColumn("State") { StatusBadge(title: $0.state.uppercased(), tone: $0.isRunning ? .success : .danger) }.width(90)
                 TableColumn("Name", value: \.name)
                 TableColumn("Image", value: \.image)
                 TableColumn("Ports") { Text($0.ports.isEmpty ? "—" : $0.ports).font(.caption.monospaced()) }
                 TableColumn("Actions") { c in
                     HStack {
+                        Button { selected = c } label: { Image(systemName: "ellipsis.circle") }.help("Quick Actions")
                         if c.isRunning {
                             Button { Task { await act(.stop, c.id) } } label: { Image(systemName: "stop.fill") }
                         } else {
@@ -132,12 +35,38 @@ struct ContainersView: View {
                         Button(role: .destructive) { Task { await act(.delete, c.id) } } label: { Image(systemName: "trash") }
                     }
                     .buttonStyle(.borderless)
-                }.width(110)
+                }.width(130)
+            }
+            .contextMenu(forSelectionType: ContainerInfo.ID.self) { ids in
+                if let id = ids.first, let c = containers.first(where: { $0.id == id }) {
+                    Button("Quick Actions…") { selected = c }
+                    Button("Shell") {
+                        session.openInteractiveShell(command: "docker exec -it \(String(c.id.prefix(12))) sh")
+                    }
+                    Button("Follow Logs") {
+                        session.openInteractiveShell(command: "docker logs -f --tail 100 \(String(c.id.prefix(12)))")
+                    }
+                    Divider()
+                    Button("Restart") { Task { await act(.restart, c.id) } }
+                    Button("Delete", role: .destructive) { Task { await act(.delete, c.id) } }
+                }
+            } primaryAction: { ids in
+                if let id = ids.first {
+                    selected = containers.first(where: { $0.id == id })
+                }
             }
         }
         .overlay { if isLoading { ProgressView() } }
         .requiresServer(session.connectionInfo(from: servers) != nil)
-        .toolbar { ToolbarItem { Button { Task { await load() } } label: { Label("Refresh", systemImage: "arrow.clockwise") } } }
+        .toolbar {
+            ToolbarItem {
+                Button { Task { await load() } } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+            }
+        }
+        .sheet(item: $selected) { container in
+            ContainerQuickActionsSheet(container: container)
+                .onDisappear { Task { await load() } }
+        }
         .task(id: session.activeServerID) { await load() }
     }
 
@@ -702,8 +631,24 @@ struct SettingsView: View {
                     .foregroundStyle(BrandColor.textSecondary)
             }
             Section("About") {
-                LabeledContent("App", value: "Parevo Ops")
-                LabeledContent("Slogan", value: "The Native DevOps Workspace for macOS")
+                HStack(spacing: BrandSpacing.medium) {
+                    Image("BrandLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 48, height: 48)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Ops").font(.headline)
+                        Text("Native DevOps workspace for macOS")
+                            .font(.caption)
+                            .foregroundStyle(BrandColor.textSecondary)
+                        Text("by Parevo Co.")
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(BrandColor.textMuted)
+                    }
+                }
+                LabeledContent("Version", value: "1.0")
+                LabeledContent("Developer", value: "Parevo Co.")
             }
         }
         .formStyle(.grouped)

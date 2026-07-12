@@ -34,15 +34,22 @@
 		F5B0B5BC98F67C201150D1D8 /* ServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B093405FE983AA67B63B23 /* ServiceProtocols.swift */; };
 		F5B0F6975E9351C23FBC5DC3 /* SSHService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B082BF65117439BEED7233 /* SSHService.swift */; };
 		F5B04F346FCF8DBD59A6194A /* SystemdService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B02F8062E1719A22370544 /* SystemdService.swift */; };
+		F5B0AC963D6F953A86C40C13 /* CommandPaletteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B03D2F0E3C223A60CC041F /* CommandPaletteView.swift */; };
 		F5B00471F9E5C0C8DF0BF178 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B043FE79B7120123D4F3D8 /* ContentView.swift */; };
 		F5B0DDDD9459B28E3DA44E56 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B06C153F314998E4B815E7 /* DashboardView.swift */; };
+		F5B0E3E13A23C0D795B8BCDC /* ContainerQuickActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0DDB7909FA9322B48D958 /* ContainerQuickActions.swift */; };
 		F5B0320E341158BC88CFD5F9 /* MetricsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B083115514FAB88F8C6340 /* MetricsView.swift */; };
 		F5B0FF292F1D59C43AABBFD8 /* ModuleViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0BDBDF7ED3978892FCB78 /* ModuleViews.swift */; };
+		F5B0C392CE7156C32530D4FA /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0A5743F6D26B6A53D2665 /* ProjectDetailView.swift */; };
+		F5B069A89FF22674E9F3488A /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B09B0A56A2939F403B51AA /* ProjectsView.swift */; };
 		F5B038EF671CF1A997C21DFE /* ServersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B03F2889166848A45AC04E /* ServersView.swift */; };
 		F5B0DF3E33EB60F6F49667BC /* SidebarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B00357411D0486E585B50E /* SidebarItem.swift */; };
+		F5B0C22F4DF715EFA1726C16 /* InteractiveSSHTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0CCD7552D7F0236DCDFBF /* InteractiveSSHTerminalView.swift */; };
 		F5B06DC1BD4449E67D50C462 /* TerminalConsoleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0CC9A1C00A1E02102458D /* TerminalConsoleView.swift */; };
 		F5B087B3B23297D53CC6224C /* TerminalPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B00656EE90AB37F3A4ED1D /* TerminalPanel.swift */; };
 		F5B08B93EAFF1A115D3C8ACE /* TerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0CB8C03C1B70210333A8C /* TerminalSession.swift */; };
+		F5B0A6070B9CF28E71610AA2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5B059DAA59D477A91E75E04 /* Assets.xcassets */; };
+		F5B0SWIFTTERMPROD000001 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = F5B0SWIFTTERMPRODUCT01 /* SwiftTerm */; };
 /* End PBXBuildFile */
 /* Begin PBXFileReference */
 		F5B04E80E2C02B2E48D8957C /* ParevoOps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ParevoOps.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -75,23 +82,53 @@
 		F5B093405FE983AA67B63B23 /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/Protocols/ServiceProtocols.swift"; sourceTree = "<group>"; };
 		F5B082BF65117439BEED7233 /* SSHService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/SSH/SSHService.swift"; sourceTree = "<group>"; };
 		F5B02F8062E1719A22370544 /* SystemdService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Services/Systemd/SystemdService.swift"; sourceTree = "<group>"; };
+		F5B03D2F0E3C223A60CC041F /* CommandPaletteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/CommandPalette/CommandPaletteView.swift"; sourceTree = "<group>"; };
 		F5B043FE79B7120123D4F3D8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/ContentView.swift"; sourceTree = "<group>"; };
 		F5B06C153F314998E4B815E7 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Dashboard/DashboardView.swift"; sourceTree = "<group>"; };
+		F5B0DDB7909FA9322B48D958 /* ContainerQuickActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Docker/ContainerQuickActions.swift"; sourceTree = "<group>"; };
 		F5B083115514FAB88F8C6340 /* MetricsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Metrics/MetricsView.swift"; sourceTree = "<group>"; };
 		F5B0BDBDF7ED3978892FCB78 /* ModuleViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Modules/ModuleViews.swift"; sourceTree = "<group>"; };
+		F5B0A5743F6D26B6A53D2665 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Projects/ProjectDetailView.swift"; sourceTree = "<group>"; };
+		F5B09B0A56A2939F403B51AA /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Projects/ProjectsView.swift"; sourceTree = "<group>"; };
 		F5B03F2889166848A45AC04E /* ServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Servers/ServersView.swift"; sourceTree = "<group>"; };
 		F5B00357411D0486E585B50E /* SidebarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Shared/SidebarItem.swift"; sourceTree = "<group>"; };
+		F5B0CCD7552D7F0236DCDFBF /* InteractiveSSHTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Terminal/InteractiveSSHTerminalView.swift"; sourceTree = "<group>"; };
 		F5B0CC9A1C00A1E02102458D /* TerminalConsoleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Terminal/TerminalConsoleView.swift"; sourceTree = "<group>"; };
 		F5B00656EE90AB37F3A4ED1D /* TerminalPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Terminal/TerminalPanel.swift"; sourceTree = "<group>"; };
 		F5B0CB8C03C1B70210333A8C /* TerminalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Views/Terminal/TerminalSession.swift"; sourceTree = "<group>"; };
+		F5B059DAA59D477A91E75E04 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference */
 /* Begin PBXFrameworksBuildPhase */
-		F5B00DCBC39C7F4EE777C5CF /* Frameworks */ = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		F5B00DCBC39C7F4EE777C5CF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F5B0SWIFTTERMPROD000001 /* SwiftTerm in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase */
 /* Begin PBXGroup */
-		F5B01F0CDB6334BEA1115747 = { isa = PBXGroup; children = ( F5B0C2F4C67AC237133713F6 /* Sources */, F5B027B9B3C8D6F0354892F6 /* Products */, ); sourceTree = "<group>"; };
-		F5B027B9B3C8D6F0354892F6 /* Products */ = { isa = PBXGroup; children = ( F5B04E80E2C02B2E48D8957C /* ParevoOps.app */, ); name = Products; sourceTree = "<group>"; };
-		F5B0C2F4C67AC237133713F6 /* Sources */ = { isa = PBXGroup; children = (
+		F5B01F0CDB6334BEA1115747 = {
+			isa = PBXGroup;
+			children = (
+				F5B059DAA59D477A91E75E04 /* Assets.xcassets */,
+				F5B0C2F4C67AC237133713F6 /* Sources */,
+				F5B027B9B3C8D6F0354892F6 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F5B027B9B3C8D6F0354892F6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F5B04E80E2C02B2E48D8957C /* ParevoOps.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F5B0C2F4C67AC237133713F6 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
 				F5B0D6AF073E45EF8A474599 /* AppSession.swift */,
 				F5B0EFBC4DF3FFE83A048F35 /* ParevoOpsApp.swift */,
 				F5B01DA2AE6ADCBC8FD3E6AF /* DependencyContainer+Register.swift */,
@@ -121,28 +158,85 @@
 				F5B093405FE983AA67B63B23 /* ServiceProtocols.swift */,
 				F5B082BF65117439BEED7233 /* SSHService.swift */,
 				F5B02F8062E1719A22370544 /* SystemdService.swift */,
+				F5B03D2F0E3C223A60CC041F /* CommandPaletteView.swift */,
 				F5B043FE79B7120123D4F3D8 /* ContentView.swift */,
 				F5B06C153F314998E4B815E7 /* DashboardView.swift */,
+				F5B0DDB7909FA9322B48D958 /* ContainerQuickActions.swift */,
 				F5B083115514FAB88F8C6340 /* MetricsView.swift */,
 				F5B0BDBDF7ED3978892FCB78 /* ModuleViews.swift */,
+				F5B0A5743F6D26B6A53D2665 /* ProjectDetailView.swift */,
+				F5B09B0A56A2939F403B51AA /* ProjectsView.swift */,
 				F5B03F2889166848A45AC04E /* ServersView.swift */,
 				F5B00357411D0486E585B50E /* SidebarItem.swift */,
+				F5B0CCD7552D7F0236DCDFBF /* InteractiveSSHTerminalView.swift */,
 				F5B0CC9A1C00A1E02102458D /* TerminalConsoleView.swift */,
 				F5B00656EE90AB37F3A4ED1D /* TerminalPanel.swift */,
 				F5B0CB8C03C1B70210333A8C /* TerminalSession.swift */,
-			); name = Sources; sourceTree = "<group>"; };
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup */
 /* Begin PBXNativeTarget */
-		F5B0ACB60ECD54C78D5036BA /* ParevoOps */ = { isa = PBXNativeTarget; buildConfigurationList = F5B0FA3E3883E4B4A66E8659; buildPhases = ( F5B0E20C9BE79F6CBEBFE6CE /* Sources */, F5B00DCBC39C7F4EE777C5CF /* Frameworks */, F5B0D331F827D46063D7B903 /* Resources */, ); buildRules = (); dependencies = (); name = ParevoOps; productName = ParevoOps; productReference = F5B04E80E2C02B2E48D8957C; productType = "com.apple.product-type.application"; };
+		F5B0ACB60ECD54C78D5036BA /* ParevoOps */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F5B0FA3E3883E4B4A66E8659;
+			buildPhases = (
+				F5B0E20C9BE79F6CBEBFE6CE /* Sources */,
+				F5B00DCBC39C7F4EE777C5CF /* Frameworks */,
+				F5B0D331F827D46063D7B903 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = ParevoOps;
+			packageProductDependencies = (
+				F5B0SWIFTTERMPRODUCT01 /* SwiftTerm */,
+			);
+			productName = ParevoOps;
+			productReference = F5B04E80E2C02B2E48D8957C;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget */
 /* Begin PBXProject */
-		F5B0858D06C69D166E356FB4 /* Project object */ = { isa = PBXProject; attributes = { BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 1500; TargetAttributes = { F5B0ACB60ECD54C78D5036BA = { CreatedOnToolsVersion = 15.0; }; }; }; buildConfigurationList = F5B04B2380CA9135CE36448D; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = ( en, Base, ); mainGroup = F5B01F0CDB6334BEA1115747; productRefGroup = F5B027B9B3C8D6F0354892F6; projectDirPath = ""; projectRoot = ""; targets = ( F5B0ACB60ECD54C78D5036BA /* ParevoOps */, ); };
+		F5B0858D06C69D166E356FB4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					F5B0ACB60ECD54C78D5036BA = { CreatedOnToolsVersion = 15.0; };
+				};
+			};
+			buildConfigurationList = F5B04B2380CA9135CE36448D;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = ( en, Base, );
+			mainGroup = F5B01F0CDB6334BEA1115747;
+			packageReferences = (
+				F5B0SWIFTTERMPKG00000001 /* XCLocalSwiftPackageReference "LocalPackages/SwiftTerm" */,
+			);
+			productRefGroup = F5B027B9B3C8D6F0354892F6;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = ( F5B0ACB60ECD54C78D5036BA /* ParevoOps */, );
+		};
 /* End PBXProject */
 /* Begin PBXResourcesBuildPhase */
-		F5B0D331F827D46063D7B903 /* Resources */ = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		F5B0D331F827D46063D7B903 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F5B0A6070B9CF28E71610AA2 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase */
 /* Begin PBXSourcesBuildPhase */
-		F5B0E20C9BE79F6CBEBFE6CE /* Sources */ = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
+		F5B0E20C9BE79F6CBEBFE6CE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 				F5B0AD7927F445392064E5D0 /* AppSession.swift in Sources */,
 				F5B0ADC4488F19DBF0809626 /* ParevoOpsApp.swift in Sources */,
 				F5B01BA664823FF24E4DE394 /* DependencyContainer+Register.swift in Sources */,
@@ -172,27 +266,47 @@
 				F5B0B5BC98F67C201150D1D8 /* ServiceProtocols.swift in Sources */,
 				F5B0F6975E9351C23FBC5DC3 /* SSHService.swift in Sources */,
 				F5B04F346FCF8DBD59A6194A /* SystemdService.swift in Sources */,
+				F5B0AC963D6F953A86C40C13 /* CommandPaletteView.swift in Sources */,
 				F5B00471F9E5C0C8DF0BF178 /* ContentView.swift in Sources */,
 				F5B0DDDD9459B28E3DA44E56 /* DashboardView.swift in Sources */,
+				F5B0E3E13A23C0D795B8BCDC /* ContainerQuickActions.swift in Sources */,
 				F5B0320E341158BC88CFD5F9 /* MetricsView.swift in Sources */,
 				F5B0FF292F1D59C43AABBFD8 /* ModuleViews.swift in Sources */,
+				F5B0C392CE7156C32530D4FA /* ProjectDetailView.swift in Sources */,
+				F5B069A89FF22674E9F3488A /* ProjectsView.swift in Sources */,
 				F5B038EF671CF1A997C21DFE /* ServersView.swift in Sources */,
 				F5B0DF3E33EB60F6F49667BC /* SidebarItem.swift in Sources */,
+				F5B0C22F4DF715EFA1726C16 /* InteractiveSSHTerminalView.swift in Sources */,
 				F5B06DC1BD4449E67D50C462 /* TerminalConsoleView.swift in Sources */,
 				F5B087B3B23297D53CC6224C /* TerminalPanel.swift in Sources */,
 				F5B08B93EAFF1A115D3C8ACE /* TerminalSession.swift in Sources */,
-			); runOnlyForDeploymentPostprocessing = 0; };
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase */
 /* Begin XCBuildConfiguration */
 		F5B0B79345345B5686866647 /* Debug */ = { isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; DEBUG_INFORMATION_FORMAT = dwarf; MACOSX_DEPLOYMENT_TARGET = 14.0; ONLY_ACTIVE_ARCH = YES; SDKROOT = macosx; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
 		F5B0E8694EC4C7FF4063F5D0 /* Release */ = { isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_COMPILATION_MODE = wholemodule; }; name = Release; };
-		F5B0123456789ABCDEF00001 /* Debug */ = { isa = XCBuildConfiguration; buildSettings = { CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_NSPrincipalClass = NSApplication; INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Parevo Ops alerts you when CPU, RAM, or disk thresholds are breached."; LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/../Frameworks", ); MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.parevo.ops; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Debug; };
-		F5B0123456789ABCDEF00002 /* Release */ = { isa = XCBuildConfiguration; buildSettings = { CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_NSPrincipalClass = NSApplication; INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Parevo Ops alerts you when CPU, RAM, or disk thresholds are breached."; LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/../Frameworks", ); MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.parevo.ops; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Release; };
+		F5B0123456789ABCDEF00001 /* Debug */ = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Ops"; INFOPLIST_KEY_NSPrincipalClass = NSApplication; INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Ops alerts you when CPU, RAM, or disk thresholds are breached."; INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © Parevo Co."; LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/../Frameworks", ); MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.parevo.ops; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Debug; };
+		F5B0123456789ABCDEF00002 /* Release */ = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Ops"; INFOPLIST_KEY_NSPrincipalClass = NSApplication; INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Ops alerts you when CPU, RAM, or disk thresholds are breached."; INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © Parevo Co."; LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/../Frameworks", ); MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.parevo.ops; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Release; };
 /* End XCBuildConfiguration */
 /* Begin XCConfigurationList */
 		F5B04B2380CA9135CE36448D /* Build configuration list for PBXProject "ParevoOps" */ = { isa = XCConfigurationList; buildConfigurations = ( F5B0B79345345B5686866647 /* Debug */, F5B0E8694EC4C7FF4063F5D0 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		F5B0FA3E3883E4B4A66E8659 /* Build configuration list for PBXNativeTarget "ParevoOps" */ = { isa = XCConfigurationList; buildConfigurations = ( F5B0123456789ABCDEF00001 /* Debug */, F5B0123456789ABCDEF00002 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList */
+/* Begin XCRemoteSwiftPackageReference */
+		F5B0SWIFTTERMPKG00000001 /* XCLocalSwiftPackageReference "LocalPackages/SwiftTerm" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = LocalPackages/SwiftTerm;
+		};
+/* End XCRemoteSwiftPackageReference */
+/* Begin XCSwiftPackageProductDependency */
+		F5B0SWIFTTERMPRODUCT01 /* SwiftTerm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F5B0SWIFTTERMPKG00000001 /* XCLocalSwiftPackageReference "LocalPackages/SwiftTerm" */;
+			productName = SwiftTerm;
+		};
+/* End XCSwiftPackageProductDependency */
 	};
 	rootObject = F5B0858D06C69D166E356FB4 /* Project object */;
 }

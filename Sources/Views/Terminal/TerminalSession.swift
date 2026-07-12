@@ -5,7 +5,7 @@ import SwiftData
 @Observable
 @MainActor
 final class TerminalSession {
-    var buffer = "Parevo Ops terminal — live SSH stream ready.\n"
+    var buffer = "Ops terminal — live SSH stream ready.\n"
     var input = ""
     var isRunning = false
     var cwd = "~"

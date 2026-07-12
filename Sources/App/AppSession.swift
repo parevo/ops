@@ -7,8 +7,15 @@ import SwiftData
 public final class AppSession {
     public var activeServerID: UUID?
     public var terminalVisible = false
-    public var terminalHeight: CGFloat = 260
+    public var terminalHeight: CGFloat = 280
     public var lastErrorMessage: String?
+
+    /// Global navigation / palette routing
+    public var selectedSidebar: SidebarItem? = .dashboard
+    public var showCommandPalette = false
+    public var showInteractiveShell = false
+    public var interactiveShellCommand: String? = nil
+    public var selectedProjectID: UUID?
 
     public init() {}
 
@@ -41,5 +48,16 @@ public final class AppSession {
             throw OpsError.noActiveServer
         }
         return info
+    }
+
+    public func openInteractiveShell(command: String? = nil) {
+        interactiveShellCommand = command
+        showInteractiveShell = true
+        terminalVisible = false
+    }
+
+    public func navigate(to item: SidebarItem) {
+        selectedSidebar = item
+        showCommandPalette = false
     }
 }

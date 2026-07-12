@@ -162,6 +162,18 @@ public final class DockerService: DockerServiceProtocol {
         try await mutate("/containers/\(Self.pathEscape(id))?force=true", method: "DELETE", on: server)
     }
 
+    public func inspectContainer(id: String, on server: SSHConnectionInfo) async throws -> String {
+        let result = try await request("/containers/\(Self.pathEscape(id))/json", on: server)
+        // Pretty-print if possible
+        if let data = try? Self.jsonData(from: result.body, allowEmpty: false),
+           let obj = try? JSONSerialization.jsonObject(with: data),
+           let pretty = try? JSONSerialization.data(withJSONObject: obj, options: [.prettyPrinted, .sortedKeys]),
+           let text = String(data: pretty, encoding: .utf8) {
+            return text
+        }
+        return result.body
+    }
+
     private static func pathEscape(_ value: String) -> String {
         value.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? value
     }

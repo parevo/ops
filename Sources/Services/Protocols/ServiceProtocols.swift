@@ -18,6 +18,7 @@ public protocol DockerServiceProtocol: Sendable {
     func stopContainer(id: String, on server: SSHConnectionInfo) async throws
     func restartContainer(id: String, on server: SSHConnectionInfo) async throws
     func deleteContainer(id: String, on server: SSHConnectionInfo) async throws
+    func inspectContainer(id: String, on server: SSHConnectionInfo) async throws -> String
     func fetchImages(for server: SSHConnectionInfo) async throws -> [DockerImageInfo]
     func fetchVolumes(for server: SSHConnectionInfo) async throws -> [DockerVolumeInfo]
     func fetchNetworks(for server: SSHConnectionInfo) async throws -> [DockerNetworkInfo]
