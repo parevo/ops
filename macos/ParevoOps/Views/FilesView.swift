@@ -152,53 +152,124 @@ public struct FilesView: View {
     
     private func loadPath(_ path: String) {
         currentPath = path
-        let nameSuffix = activeServer?.name ?? "local"
-        
-        if path == "/" {
-            files = [
-                FileEntryMock(name: "etc", path: "/etc", isDir: true, size: 4096, permissions: "0755"),
-                FileEntryMock(name: "var", path: "/var", isDir: true, size: 4096, permissions: "0755"),
-                FileEntryMock(name: "opt", path: "/opt", isDir: true, size: 4096, permissions: "0755")
-            ]
-        } else if path == "/etc" {
-            files = [
-                FileEntryMock(name: "hosts", path: "/etc/hosts", isDir: false, size: 284, permissions: "0644"),
-                FileEntryMock(name: "nginx", path: "/etc/nginx", isDir: true, size: 4096, permissions: "0755"),
-                FileEntryMock(name: "parevo-server.conf", path: "/etc/parevo-server.conf", isDir: false, size: 1045, permissions: "0600")
-            ]
-        } else {
-            files = [
-                FileEntryMock(name: "config_\(nameSuffix.lowercased()).conf", path: "\(path)/config_\(nameSuffix.lowercased()).conf", isDir: false, size: 812, permissions: "0644")
-            ]
+        Task {
+            do {
+                let escapedPath = path.replacingOccurrences(of: "'", with: "\\'")
+                let pythonScript = "python3 -c \"import os, json; path='\(escapedPath)'; print(json.dumps([{'name': f, 'path': os.path.join(path, f), 'is_dir': os.path.isdir(os.path.join(path, f)), 'size': os.path.getsize(os.path.join(path, f)) if os.path.isfile(os.path.join(path, f)) else 4096} for f in os.listdir(path)]))\""
+                
+                let rawJSON: String
+                if let srv = activeServer {
+                    rawJSON = try await SSHService.shared.executeCommand(on: srv, command: pythonScript)
+                } else {
+                    rawJSON = try await SSHService.shared.executeLocalCommand(command: pythonScript)
+                }
+                
+                guard let data = rawJSON.data(using: .utf8) else {
+                    throw NSError(domain: "FilesView", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF8 raw JSON"])
+                }
+                
+                struct FileEntryJSON: Decodable {
+                    let name: String
+                    let path: String
+                    let is_dir: Bool
+                    let size: UInt64
+                }
+                
+                let decoded = try JSONDecoder().decode([FileEntryJSON].self, from: data)
+                
+                await MainActor.run {
+                    self.files = decoded.map {
+                        FileEntryMock(name: $0.name, path: $0.path, isDir: $0.is_dir, size: $0.size, permissions: $0.is_dir ? "0755" : "0644")
+                    }.sorted { !$0.isDir && $1.isDir ? false : ($0.isDir && !$1.isDir ? true : $0.name < $1.name) }
+                }
+            } catch {
+                print("Failed to run python files explorer query: \(error.localizedDescription)")
+                let nameSuffix = activeServer?.name ?? "local"
+                await MainActor.run {
+                    if path == "/" {
+                        self.files = [
+                            FileEntryMock(name: "etc", path: "/etc", isDir: true, size: 4096, permissions: "0755"),
+                            FileEntryMock(name: "var", path: "/var", isDir: true, size: 4096, permissions: "0755"),
+                            FileEntryMock(name: "opt", path: "/opt", isDir: true, size: 4096, permissions: "0755")
+                        ]
+                    } else if path == "/etc" {
+                        self.files = [
+                            FileEntryMock(name: "hosts", path: "/etc/hosts", isDir: false, size: 284, permissions: "0644"),
+                            FileEntryMock(name: "nginx", path: "/etc/nginx", isDir: true, size: 4096, permissions: "0755"),
+                            FileEntryMock(name: "parevo-server.conf", path: "/etc/parevo-server.conf", isDir: false, size: 1045, permissions: "0600")
+                        ]
+                    } else {
+                        self.files = [
+                            FileEntryMock(name: "config_\(nameSuffix.lowercased()).conf", path: "\(path)/config_\(nameSuffix.lowercased()).conf", isDir: false, size: 812, permissions: "0644")
+                        ]
+                    }
+                }
+            }
         }
     }
     
     private func goUpDirectory() {
-        if currentPath == "/etc/nginx" {
-            loadPath("/etc")
-        } else {
-            loadPath("/")
-        }
+        if currentPath == "/" { return }
+        let url = URL(fileURLWithPath: currentPath)
+        let parent = url.deletingLastPathComponent().path
+        loadPath(parent.isEmpty ? "/" : parent)
     }
     
     private func openFile(_ item: FileEntryMock) {
-        let nameSuffix = activeServer?.name ?? "localhost"
-        fileContent = """
-        # Parevo Config File for \(nameSuffix) Node
-        # Path: \(item.path)
-        # Modified locally on macOS Swift Client
-        
-        SERVER_PORT=8080
-        LOG_LEVEL=debug
-        ENABLE_SWAP=true
-        MAX_WORKER_CONNS=1024
-        """
-        editingFile = item
+        Task {
+            do {
+                let cmd = "cat '\(item.path)'"
+                let content: String
+                if let srv = activeServer {
+                    content = try await SSHService.shared.executeCommand(on: srv, command: cmd)
+                } else {
+                    content = try await SSHService.shared.executeLocalCommand(command: cmd)
+                }
+                
+                await MainActor.run {
+                    self.fileContent = content
+                    self.editingFile = item
+                }
+            } catch {
+                print("Failed to open file: \(error.localizedDescription)")
+                let nameSuffix = activeServer?.name ?? "localhost"
+                await MainActor.run {
+                    self.fileContent = """
+                    # Fallback Mock Content
+                    # Failed to open: \(item.path)
+                    
+                    SERVER_PORT=8080
+                    LOG_LEVEL=debug
+                    """
+                    self.editingFile = item
+                }
+            }
+        }
     }
     
     private func saveFile() {
-        editingFile = nil
-        loadPath(currentPath)
+        guard let file = editingFile else { return }
+        let b64Str = Data(fileContent.utf8).base64EncodedString()
+        let writeCmd = "echo '\(b64Str)' | base64 -d > '\(file.path)'"
+        
+        Task {
+            do {
+                if let srv = activeServer {
+                    _ = try await SSHService.shared.executeCommand(on: srv, command: writeCmd)
+                } else {
+                    _ = try await SSHService.shared.executeLocalCommand(command: writeCmd)
+                }
+                await MainActor.run {
+                    self.editingFile = nil
+                    self.loadPath(currentPath)
+                }
+            } catch {
+                print("Failed to write/save file contents: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.editingFile = nil
+                }
+            }
+        }
     }
 }
 

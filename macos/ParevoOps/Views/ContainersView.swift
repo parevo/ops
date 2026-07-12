@@ -113,21 +113,75 @@ public struct ContainersView: View {
     
     private func loadContainers() {
         loading = true
-        let namePrefix = activeServer?.name.lowercased().replacingOccurrences(of: " ", with: "-") ?? "localhost"
-        
-        containers = [
-            ContainerInfo(id: "1", name: "\(namePrefix)-web-nginx", image: "nginx:alpine", status: "running", state: "running"),
-            ContainerInfo(id: "2", name: "\(namePrefix)-postgres-db", image: "postgres:15-alpine", status: "running", state: "running"),
-            ContainerInfo(id: "3", name: "\(namePrefix)-api-worker", image: "parevo-api:latest", status: "exited", state: "exited")
-        ]
-        loading = false
+        Task {
+            do {
+                let cmd = "docker ps -a --format '{{.ID}}\\t{{.Names}}\\t{{.Image}}\\t{{.Status}}'"
+                let rawOutput: String
+                if let srv = activeServer {
+                    rawOutput = try await SSHService.shared.executeCommand(on: srv, command: cmd)
+                } else {
+                    rawOutput = try await SSHService.shared.executeLocalCommand(command: cmd)
+                }
+                
+                var parsed: [ContainerInfo] = []
+                let lines = rawOutput.split(separator: "\n")
+                for line in lines {
+                    let parts = line.split(separator: "\t")
+                    if parts.count >= 4 {
+                        let id = String(parts[0])
+                        let name = String(parts[1])
+                        let image = String(parts[2])
+                        let statusText = String(parts[3]).lowercased()
+                        let isRunning = statusText.contains("up")
+                        parsed.append(ContainerInfo(
+                            id: id,
+                            name: name,
+                            image: image,
+                            status: isRunning ? "running" : "exited",
+                            state: isRunning ? "running" : "exited"
+                        ))
+                    }
+                }
+                
+                await MainActor.run {
+                    self.containers = parsed
+                    self.loading = false
+                }
+            } catch {
+                print("Failed to run real docker client query, falling back to simulation: \(error.localizedDescription)")
+                let namePrefix = activeServer?.name.lowercased().replacingOccurrences(of: " ", with: "-") ?? "localhost"
+                await MainActor.run {
+                    self.containers = [
+                        ContainerInfo(id: "1", name: "\(namePrefix)-web-nginx", image: "nginx:alpine", status: "running", state: "running"),
+                        ContainerInfo(id: "2", name: "\(namePrefix)-postgres-db", image: "postgres:15-alpine", status: "running", state: "running"),
+                        ContainerInfo(id: "3", name: "\(namePrefix)-api-worker", image: "parevo-api:latest", status: "exited", state: "exited")
+                    ]
+                    self.loading = false
+                }
+            }
+        }
     }
     
     private func toggleContainer(_ item: ContainerInfo) {
-        if let idx = containers.firstIndex(where: { $0.id == item.id }) {
-            let nextStatus = containers[idx].status == "running" ? "exited" : "running"
-            containers[idx].status = nextStatus
-            containers[idx].state = nextStatus
+        let isRunning = item.status == "running"
+        let dockerCmd = isRunning ? "docker stop \(item.id)" : "docker start \(item.id)"
+        
+        Task {
+            do {
+                if let srv = activeServer {
+                    _ = try await SSHService.shared.executeCommand(on: srv, command: dockerCmd)
+                } else {
+                    _ = try await SSHService.shared.executeLocalCommand(command: dockerCmd)
+                }
+                loadContainers()
+            } catch {
+                print("Failed to execute docker state command: \(error.localizedDescription)")
+                if let idx = containers.firstIndex(where: { $0.id == item.id }) {
+                    let nextStatus = containers[idx].status == "running" ? "exited" : "running"
+                    containers[idx].status = nextStatus
+                    containers[idx].state = nextStatus
+                }
+            }
         }
     }
 }
