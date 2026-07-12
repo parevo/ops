@@ -533,61 +533,6 @@ struct LogsView: View {
     }
 }
 
-struct MetricsView: View {
-    @Environment(AppSession.self) private var session
-    @Query private var servers: [Server]
-    @State private var metrics = SystemMetrics()
-    @State private var history: [MetricSample] = []
-    @State private var errorMessage: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: BrandSpacing.large) {
-            if let errorMessage { Text(errorMessage).foregroundStyle(BrandColor.danger) }
-            GroupBox("CPU") {
-                Chart(history) { s in
-                    LineMark(x: .value("t", s.date), y: .value("cpu", s.cpu)).foregroundStyle(BrandColor.accent)
-                    AreaMark(x: .value("t", s.date), y: .value("cpu", s.cpu)).foregroundStyle(BrandColor.accent.opacity(0.15))
-                }
-                .chartYScale(domain: 0...100)
-                .frame(height: 220)
-            }
-            HStack {
-                LabeledContent("RAM", value: String(format: "%.1f%%", metrics.ramUsage))
-                LabeledContent("Disk", value: String(format: "%.1f%%", metrics.diskUsage))
-                LabeledContent("Health", value: "\(metrics.healthScore)")
-            }
-            Spacer()
-        }
-        .padding(BrandSpacing.large)
-        .requiresServer(session.connectionInfo(from: servers) != nil)
-        .task(id: session.activeServerID) {
-            while !Task.isCancelled {
-                await sample()
-                try? await Task.sleep(nanoseconds: 5_000_000_000)
-            }
-        }
-    }
-
-    @MainActor
-    private func sample() async {
-        guard let info = session.connectionInfo(from: servers) else { return }
-        do {
-            metrics = try await DependencyContainer.shared.resolve(MetricsServiceProtocol.self).fetchLiveMetrics(for: info)
-            history.append(MetricSample(date: Date(), cpu: metrics.cpuUsage))
-            if history.count > 60 { history.removeFirst(history.count - 60) }
-            errorMessage = nil
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-}
-
-struct MetricSample: Identifiable {
-    let id = UUID()
-    let date: Date
-    let cpu: Double
-}
-
 struct DeploymentsView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -708,6 +653,7 @@ struct MemoryView: View {
 struct SettingsView: View {
     @AppStorage("parevo.autoRefresh") private var autoRefresh = true
     @AppStorage("parevo.refreshInterval") private var refreshInterval = 15.0
+    @Environment(AlertMonitor.self) private var alerts
 
     var body: some View {
         Form {
@@ -721,6 +667,35 @@ struct SettingsView: View {
                         }
                     }
                 }
+            }
+            Section("Alerts & Notifications") {
+                Toggle("Enable alert monitor", isOn: Binding(
+                    get: { alerts.isEnabled },
+                    set: { alerts.isEnabled = $0 }
+                ))
+                LabeledContent("CPU ≥") {
+                    Slider(value: Binding(
+                        get: { alerts.thresholds.cpu },
+                        set: { alerts.thresholds.cpu = $0 }
+                    ), in: 50...99, step: 1)
+                    Text("\(Int(alerts.thresholds.cpu))%").monospacedDigit().frame(width: 40)
+                }
+                LabeledContent("RAM ≥") {
+                    Slider(value: Binding(
+                        get: { alerts.thresholds.ram },
+                        set: { alerts.thresholds.ram = $0 }
+                    ), in: 50...99, step: 1)
+                    Text("\(Int(alerts.thresholds.ram))%").monospacedDigit().frame(width: 40)
+                }
+                LabeledContent("Disk ≥") {
+                    Slider(value: Binding(
+                        get: { alerts.thresholds.disk },
+                        set: { alerts.thresholds.disk = $0 }
+                    ), in: 50...99, step: 1)
+                    Text("\(Int(alerts.thresholds.disk))%").monospacedDigit().frame(width: 40)
+                }
+                Text("macOS notifications fire on threshold breach (5 min cooldown per type).")
+                    .foregroundStyle(BrandColor.textSecondary)
             }
             Section("Security") {
                 Text("SSH passwords are stored in the macOS Keychain. Private keys stay as local file paths you select.")

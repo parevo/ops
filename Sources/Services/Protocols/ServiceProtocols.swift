@@ -1,8 +1,14 @@
 import Foundation
 
+public enum SSHStreamEvent: Sendable {
+    case chunk(String)
+    case exit(code: Int)
+}
+
 public protocol SSHServiceProtocol: Sendable {
     func connect(server: SSHConnectionInfo) async throws -> Bool
     func executeCommand(_ command: String, on server: SSHConnectionInfo) async throws -> (output: String, exitCode: Int)
+    func streamCommand(_ command: String, on server: SSHConnectionInfo) -> AsyncThrowingStream<SSHStreamEvent, Error>
     func disconnect(server: SSHConnectionInfo) async
 }
 

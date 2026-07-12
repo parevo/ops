@@ -4,19 +4,31 @@ import SwiftData
 struct TerminalPanel: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
-    @State private var input = ""
-    @State private var history: [String] = []
-    @State private var cwd = "~"
+    @State private var term = TerminalSession()
     @FocusState private var focused: Bool
-    @State private var nextHint: String?
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
+            HStack(spacing: BrandSpacing.small) {
                 Label(session.server(from: servers)?.name ?? "No server", systemImage: "terminal")
                     .font(.caption.weight(.semibold))
+                if term.isRunning {
+                    ProgressView().controlSize(.small)
+                    Text("live").font(.caption2).foregroundStyle(BrandColor.success)
+                }
                 Spacer()
-                Text(cwd).font(.caption.monospaced()).foregroundStyle(BrandColor.textSecondary)
+                Text(term.statusLine)
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(BrandColor.textSecondary)
+                Button("Clear") { term.clear() }
+                    .buttonStyle(.borderless)
+                if term.isRunning {
+                    Button("Stop") { term.stop() }
+                        .buttonStyle(.bordered)
+                        .tint(BrandColor.danger)
+                        .keyboardShortcut(.cancelAction)
+                }
                 Button {
                     session.terminalVisible = false
                 } label: {
@@ -30,33 +42,15 @@ struct TerminalPanel: View {
             .padding(.vertical, BrandSpacing.small)
             .background(.bar)
 
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 4) {
-                        ForEach(Array(history.enumerated()), id: \.offset) { idx, line in
-                            Text(line)
-                                .font(.system(.body, design: .monospaced))
-                                .foregroundStyle(BrandColor.consoleText)
-                                .textSelection(.enabled)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .id(idx)
-                        }
-                    }
-                    .padding(BrandSpacing.medium)
-                }
-                .background(BrandColor.consoleBackground)
-                .onChange(of: history.count) { _, _ in
-                    if let last = history.indices.last { proxy.scrollTo(last, anchor: .bottom) }
-                }
-            }
+            TerminalConsoleView(text: $term.buffer, isDark: colorScheme == .dark)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            if let nextHint {
+            if let hint = term.nextHint, !term.isRunning {
                 HStack {
                     Image(systemName: "arrow.turn.down.right")
-                    Text("Next step usually: \(nextHint)")
-                        .font(.caption)
+                    Text("Next: \(hint)").font(.caption).lineLimit(1)
                     Spacer()
-                    Button("Insert") { input = nextHint ?? input }
+                    Button("Insert") { term.input = hint }
                         .buttonStyle(.borderless)
                 }
                 .padding(.horizontal, BrandSpacing.medium)
@@ -65,52 +59,53 @@ struct TerminalPanel: View {
             }
 
             HStack(spacing: BrandSpacing.small) {
-                Text("$").font(.body.monospaced().weight(.semibold)).foregroundStyle(BrandColor.success)
-                TextField("Command", text: $input)
+                Text("$")
+                    .font(.body.monospaced().weight(.semibold))
+                    .foregroundStyle(BrandColor.success)
+                TextField("Command — docker logs -f streams live · Esc stops", text: $term.input)
                     .textFieldStyle(.plain)
                     .font(.body.monospaced())
                     .focused($focused)
-                    .onSubmit { Task { await run() } }
+                    .disabled(session.connectionInfo(from: servers) == nil)
+                    .onSubmit { submit() }
+                if term.isRunning {
+                    Button("Stop", action: term.stop)
+                        .keyboardShortcut("c", modifiers: .control)
+                }
             }
             .padding(BrandSpacing.medium)
             .background(BrandColor.surface)
         }
-        .onAppear { focused = true }
+        .onAppear {
+            focused = true
+            warmSSH()
+        }
+        .onChange(of: session.activeServerID) { _, _ in
+            warmSSH()
+        }
         .requiresServer(session.connectionInfo(from: servers) != nil)
     }
 
-    @MainActor
-    private func run() async {
-        let cmd = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cmd.isEmpty else { return }
+    private func submit() {
         guard let info = session.connectionInfo(from: servers) else {
-            history.append("error: no active server")
+            term.buffer += "error: no active server\n"
             return
         }
-        history.append("$ \(cmd)")
-        input = ""
-        do {
-            let res = try await DependencyContainer.shared.resolve(SSHServiceProtocol.self).executeCommand(cmd, on: info)
-            history.append(res.output.isEmpty ? "(exit \(res.exitCode))" : res.output)
-            try? await DependencyContainer.shared.resolve(MemoryServiceProtocol.self).recordCommand(
-                command: cmd,
-                directory: cwd,
-                exitCode: res.exitCode,
-                isSuccess: res.exitCode == 0,
-                serverId: session.activeServerID,
-                projectId: nil
-            )
-            nextHint = try? await DependencyContainer.shared.resolve(MemoryServiceProtocol.self)
-                .getPatternNextStep(currentCommand: cmd, serverId: session.activeServerID, projectId: nil)
-        } catch {
-            history.append(error.localizedDescription)
+        term.run(on: info, serverId: session.activeServerID)
+        focused = true
+    }
+
+    private func warmSSH() {
+        guard let info = session.connectionInfo(from: servers) else { return }
+        Task {
+            _ = try? await DependencyContainer.shared.resolve(SSHServiceProtocol.self).connect(server: info)
         }
     }
 }
 
-/// Full-page terminal (sidebar destination) reuses the panel chrome.
 struct TerminalView: View {
     var body: some View {
         TerminalPanel()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

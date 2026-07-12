@@ -12,5 +12,6 @@ extension DependencyContainer {
         register(MemoryServiceProtocol.self) { MemoryEngine() }
         register(SystemdServiceProtocol.self) { SystemdService() }
         register(DeployServiceProtocol.self) { DeployService() }
+        register(NotificationServiceProtocol.self) { NotificationService() }
     }
 }

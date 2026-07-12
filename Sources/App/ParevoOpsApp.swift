@@ -5,6 +5,7 @@ import SwiftData
 struct ParevoOpsApp: App {
     let modelContainer: ModelContainer
     @State private var session = AppSession()
+    @State private var alertMonitor = AlertMonitor()
 
     init() {
         DependencyContainer.shared.registerDefaultServices()
@@ -21,6 +22,7 @@ struct ParevoOpsApp: App {
         WindowGroup {
             ContentView()
                 .environment(session)
+                .environment(alertMonitor)
                 .frame(minWidth: 1100, minHeight: 700)
                 .modelContainer(modelContainer)
         }

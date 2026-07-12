@@ -61,14 +61,15 @@ public struct ComposeProjectInfo: Identifiable, Codable, Hashable, Sendable {
 }
 
 public struct SystemdServiceInfo: Identifiable, Codable, Hashable, Sendable {
-    public var id: String { unit }
+    public var id: String
     public var unit: String
     public var load: String
     public var active: String
     public var sub: String
     public var description: String
 
-    public init(unit: String, load: String, active: String, sub: String, description: String) {
+    public init(id: String? = nil, unit: String, load: String, active: String, sub: String, description: String) {
+        self.id = id ?? unit
         self.unit = unit
         self.load = load
         self.active = active

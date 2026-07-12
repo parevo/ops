@@ -4,6 +4,7 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
     private let fileManager = FileManager.default
     private let lock = NSLock()
     private var activeSessions: Set<String> = []
+    private var runningProcesses: [UUID: Process] = [:]
 
     public init() {}
 
@@ -38,10 +39,8 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
     private func makeAskPass(password: String) throws -> URL {
         let dir = fileManager.temporaryDirectory
         let script = dir.appendingPathComponent("parevo-askpass-\(UUID().uuidString).sh")
-        let escaped = password
-            .replacingOccurrences(of: "'", with: "'\\''")
-        let content = "#!/bin/sh\necho '\(escaped)'\n"
-        try content.write(to: script, atomically: true, encoding: .utf8)
+        let escaped = password.replacingOccurrences(of: "'", with: "'\\''")
+        try "#!/bin/sh\necho '\(escaped)'\n".write(to: script, atomically: true, encoding: .utf8)
         try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
         return script
     }
@@ -49,14 +48,23 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
     private func baseArguments(for server: SSHConnectionInfo, socketPath: String) -> [String] {
         var args = [
             "-o", "ControlPath=\(socketPath)",
-            "-o", "ConnectTimeout=10",
-            "-o", "ServerAliveInterval=30",
-            "-o", "ServerAliveCountMax=3",
+            "-o", "ControlMaster=auto",
+            "-o", "ControlPersist=30m",
+            "-o", "ConnectTimeout=8",
+            "-o", "ServerAliveInterval=15",
+            "-o", "ServerAliveCountMax=2",
             "-o", "StrictHostKeyChecking=accept-new",
+            "-o", "Compression=no",
+            "-o", "IPQoS=throughput",
             "-p", "\(server.port)"
         ]
         if server.authMethod == .sshKey, let keyPath = server.privateKeyPath, !keyPath.isEmpty {
-            args += ["-i", expandPath(keyPath), "-o", "IdentitiesOnly=yes"]
+            args += [
+                "-i", expandPath(keyPath),
+                "-o", "IdentitiesOnly=yes",
+                "-o", "BatchMode=yes",
+                "-o", "PreferredAuthentications=publickey"
+            ]
         }
         return args
     }
@@ -86,9 +94,7 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
 
         var askPassURL: URL?
         defer {
-            if let askPassURL {
-                try? fileManager.removeItem(at: askPassURL)
-            }
+            if let askPassURL { try? fileManager.removeItem(at: askPassURL) }
         }
 
         let process = Process()
@@ -96,7 +102,6 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
         var args = baseArguments(for: server, socketPath: socketPath)
         args += [
             "-o", "ControlMaster=yes",
-            "-o", "ControlPersist=10m",
             "-N", "-f",
             "\(server.username)@\(server.host)"
         ]
@@ -118,7 +123,6 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
         let err = Pipe()
         process.standardOutput = Pipe()
         process.standardError = err
-
         try process.run()
         process.waitUntilExit()
 
@@ -132,6 +136,7 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
         throw OpsError.sshConnectionFailed(message.isEmpty ? "exit \(process.terminationStatus)" : message)
     }
 
+    /// Non-TTY, clean stdout — used for Docker API / JSON / parsing commands.
     public func executeCommand(_ command: String, on server: SSHConnectionInfo) async throws -> (output: String, exitCode: Int) {
         _ = try await connect(server: server)
         let socketPath = controlPath(for: server)
@@ -139,8 +144,33 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
         return try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
-                    let result = try self.runCommand(command, server: server, socketPath: socketPath)
-                    continuation.resume(returning: result)
+                    let process = Process()
+                    process.executableURL = URL(fileURLWithPath: "/usr/bin/ssh")
+                    var args = self.baseArguments(for: server, socketPath: socketPath)
+                    // Explicitly NO tty — prevents \r and prompt pollution in JSON.
+                    args += [
+                        "-o", "RequestTTY=no",
+                        "\(server.username)@\(server.host)",
+                        command
+                    ]
+                    process.arguments = args
+
+                    let out = Pipe()
+                    let err = Pipe()
+                    process.standardOutput = out
+                    process.standardError = err
+                    try process.run()
+                    process.waitUntilExit()
+
+                    let outText = String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+                    let errText = String(data: err.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+                    let code = Int(process.terminationStatus)
+                    let cleanedOut = outText.replacingOccurrences(of: "\r", with: "")
+                    let cleanedErr = errText.replacingOccurrences(of: "\r", with: "")
+                    let combined = cleanedErr.isEmpty
+                        ? cleanedOut
+                        : (cleanedOut.isEmpty ? cleanedErr : cleanedOut + "\n" + cleanedErr)
+                    continuation.resume(returning: (combined, code))
                 } catch {
                     continuation.resume(throwing: error)
                 }
@@ -148,27 +178,145 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
         }
     }
 
-    private func runCommand(_ command: String, server: SSHConnectionInfo, socketPath: String) throws -> (output: String, exitCode: Int) {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/ssh")
-        var args = baseArguments(for: server, socketPath: socketPath)
-        args += ["\(server.username)@\(server.host)", command]
-        process.arguments = args
+    /// Live stream with TTY — for `docker logs -f`, shells, etc.
+    public func streamCommand(_ command: String, on server: SSHConnectionInfo) -> AsyncThrowingStream<SSHStreamEvent, Error> {
+        AsyncThrowingStream { continuation in
+            let jobID = UUID()
+            let processBox = ProcessBox()
 
-        let out = Pipe()
-        let err = Pipe()
-        process.standardOutput = out
-        process.standardError = err
-        try process.run()
-        let outData = out.fileHandleForReading.readDataToEndOfFile()
-        let errData = err.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
+            let work = Task.detached(priority: .userInitiated) { [weak self] in
+                guard let self else {
+                    continuation.finish(throwing: OpsError.sshConnectionFailed("SSH service deallocated"))
+                    return
+                }
 
-        let output = String(data: outData, encoding: .utf8) ?? ""
-        let errorText = String(data: errData, encoding: .utf8) ?? ""
-        let exitCode = Int(process.terminationStatus)
-        let combined = errorText.isEmpty ? output : (output.isEmpty ? errorText : output + "\n" + errorText)
-        return (combined, exitCode)
+                do {
+                    _ = try await self.connect(server: server)
+                    let socketPath = self.controlPath(for: server)
+
+                    let wrapped = """
+                    export TERM=xterm-256color; \
+                    if command -v stdbuf >/dev/null 2>&1; then \
+                      stdbuf -oL -eL bash -lc \(self.shellSingleQuote(command)); \
+                    else \
+                      bash -lc \(self.shellSingleQuote(command)); \
+                    fi
+                    """
+
+                    let process = Process()
+                    process.executableURL = URL(fileURLWithPath: "/usr/bin/ssh")
+                    var args = self.baseArguments(for: server, socketPath: socketPath)
+                    args += ["-tt", "\(server.username)@\(server.host)", wrapped]
+                    process.arguments = args
+
+                    let pipe = Pipe()
+                    process.standardOutput = pipe
+                    process.standardError = pipe
+
+                    processBox.process = process
+                    self.lock.lock()
+                    self.runningProcesses[jobID] = process
+                    self.lock.unlock()
+
+                    let handle = pipe.fileHandleForReading
+                    handle.readabilityHandler = { fileHandle in
+                        let data = fileHandle.availableData
+                        guard !data.isEmpty else { return }
+                        if let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) {
+                            let cleaned = text
+                                .replacingOccurrences(of: "\r\n", with: "\n")
+                                .replacingOccurrences(of: "\r", with: "\n")
+                            if !cleaned.isEmpty {
+                                continuation.yield(.chunk(cleaned))
+                            }
+                        }
+                    }
+
+                    let exitCode: Int32 = try await withTaskCancellationHandler {
+                        try await withCheckedThrowingContinuation { (resume: CheckedContinuation<Int32, Error>) in
+                            var resumed = false
+                            let gate = NSLock()
+                            func finish(_ code: Int32) {
+                                gate.lock(); defer { gate.unlock() }
+                                guard !resumed else { return }
+                                resumed = true
+                                resume.resume(returning: code)
+                            }
+                            func fail(_ error: Error) {
+                                gate.lock(); defer { gate.unlock() }
+                                guard !resumed else { return }
+                                resumed = true
+                                resume.resume(throwing: error)
+                            }
+
+                            process.terminationHandler = { finished in
+                                finish(finished.terminationStatus)
+                            }
+
+                            do {
+                                try process.run()
+                            } catch {
+                                fail(error)
+                            }
+                        }
+                    } onCancel: {
+                        Self.forceStop(process)
+                    }
+
+                    handle.readabilityHandler = nil
+
+                    if let leftover = try? handle.readToEnd(), !leftover.isEmpty,
+                       let text = String(data: leftover, encoding: .utf8) {
+                        let cleaned = text
+                            .replacingOccurrences(of: "\r\n", with: "\n")
+                            .replacingOccurrences(of: "\r", with: "\n")
+                        if !cleaned.isEmpty {
+                            continuation.yield(.chunk(cleaned))
+                        }
+                    }
+
+                    if !Task.isCancelled {
+                        continuation.yield(.exit(code: Int(exitCode)))
+                    }
+                    continuation.finish()
+                } catch {
+                    if let process = processBox.process {
+                        Self.forceStop(process)
+                    }
+                    continuation.finish(throwing: error)
+                }
+
+                self.lock.lock()
+                self.runningProcesses.removeValue(forKey: jobID)
+                self.lock.unlock()
+                processBox.process = nil
+            }
+
+            continuation.onTermination = { @Sendable _ in
+                work.cancel()
+                if let process = processBox.process {
+                    Self.forceStop(process)
+                }
+            }
+        }
+    }
+
+    private static func forceStop(_ process: Process) {
+        guard process.isRunning else { return }
+        process.interrupt()
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.35) {
+            if process.isRunning {
+                process.terminate()
+            }
+        }
+    }
+
+    private final class ProcessBox: @unchecked Sendable {
+        var process: Process?
+    }
+
+    private func shellSingleQuote(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
     public func disconnect(server: SSHConnectionInfo) async {
@@ -178,8 +326,10 @@ public final class SSHService: SSHServiceProtocol, @unchecked Sendable {
         process.arguments = ["-O", "exit", "-S", socketPath, "\(server.username)@\(server.host)"]
         process.standardOutput = Pipe()
         process.standardError = Pipe()
-        try? process.run()
-        process.waitUntilExit()
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch {}
         uncache(socketPath)
         try? fileManager.removeItem(atPath: socketPath)
     }

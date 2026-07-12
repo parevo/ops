@@ -5,6 +5,7 @@ public struct ContentView: View {
     @State private var selectedItem: SidebarItem? = .dashboard
     @Query private var servers: [Server]
     @Environment(AppSession.self) private var session
+    @Environment(AlertMonitor.self) private var alertMonitor
 
     public var body: some View {
         VStack(spacing: 0) {
@@ -48,6 +49,11 @@ public struct ContentView: View {
                         .navigationTitle(selectedItem?.rawValue ?? "Parevo Ops")
                         .toolbar {
                             ToolbarItemGroup(placement: .primaryAction) {
+                                if !alertMonitor.activeAlerts.isEmpty {
+                                    Label("\(alertMonitor.activeAlerts.count)", systemImage: "bell.badge.fill")
+                                        .foregroundStyle(BrandColor.danger)
+                                        .help(alertMonitor.activeAlerts.map(\.kind.title).joined(separator: ", "))
+                                }
                                 serverMenu
                                 Button {
                                     session.terminalVisible.toggle()
@@ -63,13 +69,14 @@ public struct ContentView: View {
             if session.terminalVisible && selectedItem != .terminal {
                 Divider()
                 TerminalPanel()
-                    .frame(height: session.terminalHeight)
+                    .frame(height: max(session.terminalHeight, 280))
             }
         }
         .onAppear {
             if session.activeServerID == nil {
                 session.select(servers.first)
             }
+            alertMonitor.start(session: session) { servers }
         }
         .onChange(of: servers) { _, newServers in
             if let id = session.activeServerID,
