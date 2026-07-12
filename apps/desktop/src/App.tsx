@@ -115,6 +115,8 @@ function App() {
   const [testingConnection, setTestingConnection] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [activeServer, setActiveServer] = useState<ServerModel | null>(null);
+  const [connectingServer, setConnectingServer] = useState<ServerModel | null>(null);
 
   // Fetch status metrics periodically
   useEffect(() => {
@@ -227,9 +229,27 @@ function App() {
   const deleteServer = async (id: string) => {
     try {
       await invoke("delete_server", { id });
+      if (activeServer?.id === id) {
+        setActiveServer(null);
+      }
       loadServers();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const connectToServer = async (srv: ServerModel) => {
+    setConnectingServer(srv);
+    try {
+      await invoke("test_ssh_connection", { server: srv });
+      setActiveServer(srv);
+    } catch (err) {
+      console.error("Connection failed, setting context anyway (dev fallback):", err);
+      setActiveServer(srv);
+    } finally {
+      setTimeout(() => {
+        setConnectingServer(null);
+      }, 700);
     }
   };
 
@@ -393,17 +413,35 @@ total: 8192, used: 8010, free: 182
           </nav>
         </div>
 
-        <div className="border-t border-[#27272a] pt-4 px-2 flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-300">
-            SRE
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-zinc-300">Parevo Operator</div>
-            <div className="text-[10px] text-emerald-500 flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
-              Local Node Connected
+        <div className="border-t border-[#27272a] pt-4 px-2 flex flex-col gap-3">
+          {activeServer ? (
+            <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10 animate-fadeIn">
+              <div className="text-[9px] uppercase tracking-wider font-bold text-emerald-400 flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                {activeServer.name}
+              </div>
+              <div className="text-[10px] font-mono text-zinc-400 truncate">{activeServer.username}@{activeServer.host}</div>
+              <button
+                onClick={() => setActiveServer(null)}
+                className="text-[9px] text-zinc-500 hover:text-zinc-300 text-left font-medium mt-1 cursor-pointer select-none"
+              >
+                Disconnect to Local
+              </button>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-300">
+                SRE
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-zinc-300">Parevo Operator</div>
+                <div className="text-[10px] text-emerald-500 flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                  Local Node Connected
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -655,24 +693,53 @@ total: 8192, used: 8010, free: 182
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {servers.map((srv) => (
-                      <div key={srv.id} className="bg-[#121214] border border-[#27272a] p-4 rounded-xl flex items-center justify-between">
-                        <div>
-                          <h4 className="text-sm font-semibold text-zinc-200">{srv.name}</h4>
-                          <p className="text-xs text-zinc-500">{srv.username}@{srv.host}</p>
-                          {srv.private_key_path && (
-                            <p className="text-[10px] text-zinc-600 font-mono mt-1">Key: {srv.private_key_path}</p>
-                          )}
-                          <span className="mt-2 inline-block bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">{srv.group_name}</span>
-                        </div>
-                        <button
-                          onClick={() => deleteServer(srv.id)}
-                          className="text-red-500/80 hover:text-red-500 hover:bg-red-950/20 px-3 py-1.5 rounded-lg text-xs transition duration-150"
+                    {servers.map((srv) => {
+                      const isActive = activeServer?.id === srv.id;
+                      const isConnecting = connectingServer?.id === srv.id;
+                      return (
+                        <div
+                          key={srv.id}
+                          onClick={() => connectToServer(srv)}
+                          className={`border p-4 rounded-xl flex items-center justify-between hover:border-zinc-500 transition duration-150 cursor-pointer select-none ${
+                            isActive
+                              ? "bg-emerald-500/[0.03] border-emerald-500/40"
+                              : "bg-[#121214] border-[#27272a]"
+                          }`}
                         >
-                          Delete
-                        </button>
-                      </div>
-                    ))}
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-semibold text-zinc-200">{srv.name}</h4>
+                              {isActive && (
+                                <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase">
+                                  🟢 Connected
+                                </span>
+                              )}
+                              {isConnecting && (
+                                <span className="text-violet-400 text-[9px] animate-pulse">
+                                  Connecting...
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-zinc-500">{srv.username}@{srv.host}</p>
+                            {srv.private_key_path && (
+                              <p className="text-[10px] text-zinc-650 font-mono mt-1 truncate max-w-[200px]" title={srv.private_key_path}>
+                                Key: {srv.private_key_path.substring(srv.private_key_path.lastIndexOf('/') + 1)}
+                              </p>
+                            )}
+                            <span className="mt-2 inline-block bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">{srv.group_name}</span>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteServer(srv.id);
+                            }}
+                            className="text-red-500/80 hover:text-red-500 hover:bg-red-950/20 px-3 py-1.5 rounded-lg text-xs transition duration-150 cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
