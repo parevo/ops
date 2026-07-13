@@ -3,8 +3,19 @@
   <channel>
     <title>Ops</title>
     <link>https://parevo.github.io/ops/</link>
-    <description>Ops — native macOS DevOps workspace by Parevo Co. Releases publish signed items here.</description>
+    <description>Ops — native macOS DevOps workspace by Parevo Co.</description>
     <language>en</language>
-    <!-- Items are written by scripts/generate-appcast.sh on each release. -->
+    <item>
+      <title>Ops 1.0.1</title>
+      <pubDate>Mon, 13 Jul 2026 03:58:58 +0000</pubDate>
+      <sparkle:version>2</sparkle:version>
+      <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>Ops 1.0.1</h2>
+        <p>Native macOS DevOps workspace — SSH, Docker, metrics, terminals, and more.</p>
+      ]]></description>
+      <enclosure url="https://github.com/parevo/ops/releases/download/v1.0.1/Ops-1.0.1.zip" sparkle:edSignature="5o2jUjK5gcFhxeDkGksu7sRWwIIls8K0P7vvH26H3bvNtN9lxQKn3OL4jc5aiaZU2hHn7Jg3M82Ra8uPyyyICA==" length="7095494" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>

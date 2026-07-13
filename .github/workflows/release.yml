@@ -23,9 +23,6 @@ jobs:
   release:
     name: Build & publish
     runs-on: macos-15
-    outputs:
-      version: ${{ steps.ver.outputs.version }}
-      tag: ${{ steps.ver.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
@@ -94,36 +91,28 @@ jobs:
 
             > Gatekeeper: unsigned/ad-hoc builds may require right-click → Open the first time.
 
-      - name: Upload docs for Pages
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs-site
-          path: docs
-
-  pages:
-    name: Deploy GitHub Pages
-    needs: release
-    runs-on: ubuntu-latest
-    # Pages must be enabled once by a human: Settings → Pages → Source: GitHub Actions.
-    # Token cannot create the Pages site on first enable for many orgs.
-    continue-on-error: true
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Download docs
-        uses: actions/download-artifact@v4
-        with:
-          name: docs-site
-          path: docs
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs
-
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      # Tag deploys to github-pages env are often blocked by protection rules.
+      # Commit appcast to main so the Pages workflow (on docs/**) can publish it.
+      - name: Publish appcast on main
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          APPCAST_SRC="$PWD/docs/appcast.xml"
+          test -f "$APPCAST_SRC"
+          WORK="$(mktemp -d)"
+          git clone --depth 1 --branch main \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "$WORK/repo"
+          cp "$APPCAST_SRC" "$WORK/repo/docs/appcast.xml"
+          cd "$WORK/repo"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- docs/appcast.xml; then
+            echo "appcast unchanged"
+            exit 0
+          fi
+          git add docs/appcast.xml
+          git commit -m "chore: publish Sparkle appcast for v${VERSION}"
+          git push origin main
