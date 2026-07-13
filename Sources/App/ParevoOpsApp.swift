@@ -9,6 +9,7 @@ struct ParevoOpsApp: App {
 
     init() {
         DependencyContainer.shared.registerDefaultServices()
+        _ = AppUpdater.shared
         do {
             let schema = Schema([Server.self, Project.self])
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
@@ -67,6 +68,11 @@ struct ParevoOpsApp: App {
                     session.navigate(to: .alerts)
                 }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
+            }
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") {
+                    AppUpdater.shared.checkForUpdates()
+                }
             }
         }
     }

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build macOS
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Build Release
+        run: |
+          xcodebuild \
+            -project ParevoOps.xcodeproj \
+            -scheme ParevoOps \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath .build/ci-derived \
+            CODE_SIGN_IDENTITY="-" \
+            build
+
+      - name: Verify app bundle
+        run: test -d .build/ci-derived/Build/Products/Release/ParevoOps.app

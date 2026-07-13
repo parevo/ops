@@ -1,3 +1,12 @@
-.DS_Store
+# Sparkle auto-update keys (never commit private key)
+signing/*.pem
+signing/*priv*
+signing/ed25519-privkey.txt
+signing/generate_keys.log
+!signing/sparkle_public_ed_key.txt
+!signing/README.md
+
+.build/
 DerivedData/
 *.xcuserstate
+.DS_Store

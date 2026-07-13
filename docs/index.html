@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ops — macOS DevOps by Parevo Co.</title>
+  <meta name="description" content="Ops is a native macOS DevOps workspace: SSH, Docker, metrics, terminals, alerts — by Parevo Co." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg0: #0c0f0a;
+      --bg1: #141a12;
+      --lime: #c8f542;
+      --lime-dim: #9bc22e;
+      --text: #e8efe0;
+      --muted: #8a9780;
+      --border: rgba(200, 245, 66, 0.18);
+      --card: rgba(20, 26, 18, 0.72);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 70% -10%, rgba(200, 245, 66, 0.14), transparent 55%),
+        radial-gradient(900px 500px at -10% 80%, rgba(90, 140, 40, 0.18), transparent 50%),
+        linear-gradient(165deg, var(--bg0), var(--bg1) 55%, #0a0d08);
+      line-height: 1.5;
+    }
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 12vh 24px 64px;
+    }
+    .brand {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-weight: 500;
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin: 0 0 20px;
+    }
+    h1 {
+      font-size: clamp(2.6rem, 8vw, 4.2rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin: 0 0 16px;
+    }
+    .lede {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 34em;
+      margin: 0 0 36px;
+    }
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 48px;
+    }
+    a.btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 22px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    a.btn:hover { transform: translateY(-1px); }
+    a.btn-primary {
+      background: var(--lime);
+      color: #10140c;
+    }
+    a.btn-primary:hover { background: #d6ff5c; }
+    a.btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    a.btn-ghost:hover { border-color: var(--lime-dim); }
+    .meta {
+      font-size: 0.9rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 28px;
+    }
+    .meta code {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.85em;
+      color: var(--lime-dim);
+    }
+    .foot {
+      margin-top: 40px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .foot a { color: var(--lime-dim); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="brand">Parevo Co.</p>
+    <h1>Ops</h1>
+    <p class="lede">
+      Native macOS DevOps workspace — SSH fleets, Docker, metrics, terminals, and alerts in one place.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" id="download" href="https://github.com/parevo/ops/releases/latest">
+        Download for macOS
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/parevo/ops">
+        GitHub
+      </a>
+    </div>
+    <div class="meta">
+      <p>Requires macOS 14+. After download, open the DMG and drag <strong>Ops</strong> to Applications.</p>
+      <p>If Gatekeeper blocks the first launch: right-click the app → <strong>Open</strong>.</p>
+      <p>Auto-updates use Sparkle via <code>appcast.xml</code> once a signed release is published.</p>
+    </div>
+    <p class="foot">© Parevo Co. · <a href="https://parevo.github.io/ops/appcast.xml">appcast</a></p>
+  </main>
+  <script>
+    // Prefer DMG asset from latest release when available
+    fetch('https://api.github.com/repos/parevo/ops/releases/latest')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data || !data.assets) return;
+        const dmg = data.assets.find(a => a.name.endsWith('.dmg'));
+        const zip = data.assets.find(a => a.name.endsWith('.zip'));
+        const asset = dmg || zip;
+        if (asset) {
+          const el = document.getElementById('download');
+          el.href = asset.browser_download_url;
+          el.textContent = 'Download ' + (data.tag_name || 'latest');
+        }
+      })
+      .catch(() => {});
+  </script>
+</body>
+</html>

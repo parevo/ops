@@ -54,11 +54,14 @@
 		F5B0SSHASKPASSBF000001 /* SSHAskPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0SSHASKPASSFR000001 /* SSHAskPass.swift */; };
 		F5B0A6070B9CF28E71610AA2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5B059DAA59D477A91E75E04 /* Assets.xcassets */; };
 		F5B0SWIFTTERMPROD000001 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = F5B0SWIFTTERMPRODUCT01 /* SwiftTerm */; };
+		F5B0SPARKLEPROD0000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = F5B0SPARKLEPRODUCT00001 /* Sparkle */; };
+		F5B0APPUPDATERBF000001 /* AppUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B0APPUPDATERFR000001 /* AppUpdater.swift */; };
 /* End PBXBuildFile */
 /* Begin PBXFileReference */
 		F5B04E80E2C02B2E48D8957C /* ParevoOps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ParevoOps.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F5B0D6AF073E45EF8A474599 /* AppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/App/AppSession.swift"; sourceTree = "<group>"; };
 		F5B0EFBC4DF3FFE83A048F35 /* ParevoOpsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/App/ParevoOpsApp.swift"; sourceTree = "<group>"; };
+		F5B0APPUPDATERFR000001 /* AppUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/App/AppUpdater.swift"; sourceTree = "<group>"; };
 		F5B01DA2AE6ADCBC8FD3E6AF /* DependencyContainer+Register.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/DI/DependencyContainer+Register.swift"; sourceTree = "<group>"; };
 		F5B02F35369429658B1C2CE6 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/DI/DependencyContainer.swift"; sourceTree = "<group>"; };
 		F5B08BA43981CE60FD0611E0 /* BrandColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Core/DesignSystem/BrandColor.swift"; sourceTree = "<group>"; };
@@ -112,6 +115,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F5B0SWIFTTERMPROD000001 /* SwiftTerm in Frameworks */,
+				F5B0SPARKLEPROD0000001 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -139,6 +143,7 @@
 			children = (
 				F5B0D6AF073E45EF8A474599 /* AppSession.swift */,
 				F5B0EFBC4DF3FFE83A048F35 /* ParevoOpsApp.swift */,
+				F5B0APPUPDATERFR000001 /* AppUpdater.swift */,
 				F5B01DA2AE6ADCBC8FD3E6AF /* DependencyContainer+Register.swift */,
 				F5B02F35369429658B1C2CE6 /* DependencyContainer.swift */,
 				F5B08BA43981CE60FD0611E0 /* BrandColor.swift */,
@@ -203,6 +208,7 @@
 			name = ParevoOps;
 			packageProductDependencies = (
 				F5B0SWIFTTERMPRODUCT01 /* SwiftTerm */,
+				F5B0SPARKLEPRODUCT00001 /* Sparkle */,
 			);
 			productName = ParevoOps;
 			productReference = F5B04E80E2C02B2E48D8957C;
@@ -227,6 +233,7 @@
 			mainGroup = F5B01F0CDB6334BEA1115747;
 			packageReferences = (
 				F5B0SWIFTTERMPKG00000001 /* XCLocalSwiftPackageReference "LocalPackages/SwiftTerm" */,
+				F5B0SPARKLEPKG00000001 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			productRefGroup = F5B027B9B3C8D6F0354892F6;
 			projectDirPath = "";
@@ -251,6 +258,7 @@
 			files = (
 				F5B0AD7927F445392064E5D0 /* AppSession.swift in Sources */,
 				F5B0ADC4488F19DBF0809626 /* ParevoOpsApp.swift in Sources */,
+				F5B0APPUPDATERBF000001 /* AppUpdater.swift in Sources */,
 				F5B01BA664823FF24E4DE394 /* DependencyContainer+Register.swift in Sources */,
 				F5B04C021E180677C45C4095 /* DependencyContainer.swift in Sources */,
 				F5B09F8680189313E282626C /* BrandColor.swift in Sources */,
@@ -303,8 +311,8 @@
 /* Begin XCBuildConfiguration */
 		F5B0B79345345B5686866647 /* Debug */ = { isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; DEBUG_INFORMATION_FORMAT = dwarf; MACOSX_DEPLOYMENT_TARGET = 14.0; ONLY_ACTIVE_ARCH = YES; SDKROOT = macosx; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
 		F5B0E8694EC4C7FF4063F5D0 /* Release */ = { isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; MACOSX_DEPLOYMENT_TARGET = 14.0; SDKROOT = macosx; SWIFT_COMPILATION_MODE = wholemodule; }; name = Release; };
-		F5B0123456789ABCDEF00001 /* Debug */ = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Ops"; INFOPLIST_KEY_NSPrincipalClass = NSApplication; INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Ops alerts you when CPU, RAM, or disk thresholds are breached."; INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © Parevo Co."; LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/../Frameworks", ); MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.parevo.ops; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Debug; };
-		F5B0123456789ABCDEF00002 /* Release */ = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Ops"; INFOPLIST_KEY_NSPrincipalClass = NSApplication; INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Ops alerts you when CPU, RAM, or disk thresholds are breached."; INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © Parevo Co."; LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/../Frameworks", ); MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.parevo.ops; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Release; };
+		F5B0123456789ABCDEF00001 /* Debug */ = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Ops"; INFOPLIST_KEY_NSPrincipalClass = NSApplication; INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Ops alerts you when CPU, RAM, or disk thresholds are breached."; INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © Parevo Co."; INFOPLIST_KEY_SUFeedURL = "https://parevo.github.io/ops/appcast.xml"; INFOPLIST_KEY_SUPublicEDKey = "$(OPS_SPARKLE_PUBLIC_ED_KEY)"; INFOPLIST_KEY_SUEnableAutomaticChecks = YES; INFOPLIST_KEY_SUAutomaticallyUpdate = YES; LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/../Frameworks", ); MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0.0; OPS_SPARKLE_PUBLIC_ED_KEY = ""; PRODUCT_BUNDLE_IDENTIFIER = com.parevo.ops; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Debug; };
+		F5B0123456789ABCDEF00002 /* Release */ = { isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Ops"; INFOPLIST_KEY_NSPrincipalClass = NSApplication; INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Ops alerts you when CPU, RAM, or disk thresholds are breached."; INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © Parevo Co."; INFOPLIST_KEY_SUFeedURL = "https://parevo.github.io/ops/appcast.xml"; INFOPLIST_KEY_SUPublicEDKey = "$(OPS_SPARKLE_PUBLIC_ED_KEY)"; INFOPLIST_KEY_SUEnableAutomaticChecks = YES; INFOPLIST_KEY_SUAutomaticallyUpdate = YES; LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/../Frameworks", ); MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0.0; OPS_SPARKLE_PUBLIC_ED_KEY = ""; PRODUCT_BUNDLE_IDENTIFIER = com.parevo.ops; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Release; };
 /* End XCBuildConfiguration */
 /* Begin XCConfigurationList */
 		F5B04B2380CA9135CE36448D /* Build configuration list for PBXProject "ParevoOps" */ = { isa = XCConfigurationList; buildConfigurations = ( F5B0B79345345B5686866647 /* Debug */, F5B0E8694EC4C7FF4063F5D0 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
@@ -315,12 +323,25 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = LocalPackages/SwiftTerm;
 		};
+		F5B0SPARKLEPKG00000001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.4;
+			};
+		};
 /* End XCRemoteSwiftPackageReference */
 /* Begin XCSwiftPackageProductDependency */
 		F5B0SWIFTTERMPRODUCT01 /* SwiftTerm */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F5B0SWIFTTERMPKG00000001 /* XCLocalSwiftPackageReference "LocalPackages/SwiftTerm" */;
 			productName = SwiftTerm;
+		};
+		F5B0SPARKLEPRODUCT00001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F5B0SPARKLEPKG00000001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency */
 	};

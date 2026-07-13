@@ -1059,8 +1059,12 @@ struct SettingsView: View {
                             .foregroundStyle(BrandColor.textMuted)
                     }
                 }
-                LabeledContent("Version", value: "1.0")
+                LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
+                LabeledContent("Build", value: Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—")
                 LabeledContent("Developer", value: "Parevo Co.")
+                Button("Check for Updates…") {
+                    AppUpdater.shared.checkForUpdates()
+                }
             }
         }
         .formStyle(.grouped)

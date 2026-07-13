@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Ops</title>
+    <link>https://parevo.github.io/ops/</link>
+    <description>Ops — native macOS DevOps workspace by Parevo Co. Releases publish signed items here.</description>
+    <language>en</language>
+    <!-- Items are written by scripts/generate-appcast.sh on each release. -->
+  </channel>
+</rss>

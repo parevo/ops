@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version without v prefix (e.g. 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build & publish
+    runs-on: macos-14
+    environment:
+      name: github-pages
+      url: https://parevo.github.io/ops/
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            V="${{ inputs.version }}"
+          else
+            V="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "tag=v$V" >> "$GITHUB_OUTPUT"
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Package release
+        env:
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          MARKETING_VERSION: ${{ steps.ver.outputs.version }}
+        run: ./scripts/package-release.sh "${{ steps.ver.outputs.version }}"
+
+      - name: Generate appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          ZIP=".build/release/Ops-${{ steps.ver.outputs.version }}.zip"
+          URL="https://github.com/${{ github.repository }}/releases/download/v${{ steps.ver.outputs.version }}/Ops-${{ steps.ver.outputs.version }}.zip"
+          ./scripts/generate-appcast.sh "${{ steps.ver.outputs.version }}" "$ZIP" "$URL"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: Ops ${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          files: |
+            .build/release/Ops-${{ steps.ver.outputs.version }}.zip
+            .build/release/Ops-${{ steps.ver.outputs.version }}.dmg
+          body: |
+            ## Ops ${{ steps.ver.outputs.version }}
+
+            Download **Ops-${{ steps.ver.outputs.version }}.dmg** (or `.zip`), open, and drag **Ops** to Applications.
+
+            Site: https://parevo.github.io/ops/
+
+            > Gatekeeper: unsigned/ad-hoc builds may require right-click → Open the first time.
+            > For seamless updates, configure Sparkle keys (`SPARKLE_PRIVATE_KEY` secret) and preferably Developer ID + notarization.
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
