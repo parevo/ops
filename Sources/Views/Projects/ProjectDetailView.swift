@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 
+@MainActor
 struct ProjectDetailView: View {
     let project: Project
     @Environment(AppSession.self) private var session

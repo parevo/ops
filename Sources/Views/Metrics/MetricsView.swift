@@ -13,6 +13,7 @@ struct MetricSample: Identifiable, Hashable {
     let health: Int
 }
 
+@MainActor
 struct MetricsView: View {
     @Environment(AppSession.self) private var session
     @Environment(AlertMonitor.self) private var alerts

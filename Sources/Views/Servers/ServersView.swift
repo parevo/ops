@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 
+@MainActor
 struct ServersView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -208,6 +209,7 @@ struct ServersView: View {
     }
 }
 
+@MainActor
 struct AddServerSheet: View {
     @Environment(\.dismiss) private var dismiss
     let onSave: (Server, String?) -> Void

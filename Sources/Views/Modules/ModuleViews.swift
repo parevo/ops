@@ -4,6 +4,7 @@ import Charts
 
 // MARK: - Docker modules
 
+@MainActor
 struct ContainersView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -103,6 +104,7 @@ struct ContainersView: View {
     }
 }
 
+@MainActor
 struct ImagesView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -125,6 +127,7 @@ struct ImagesView: View {
     }
 }
 
+@MainActor
 struct VolumesView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -147,6 +150,7 @@ struct VolumesView: View {
     }
 }
 
+@MainActor
 struct NetworksView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -170,6 +174,7 @@ struct NetworksView: View {
     }
 }
 
+@MainActor
 struct ComposeView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -223,6 +228,7 @@ struct ComposeView: View {
     }
 }
 
+@MainActor
 struct ComposeDetailSheet: View {
     let project: ComposeProjectInfo
     @Environment(AppSession.self) private var session
@@ -305,6 +311,7 @@ struct ComposeDetailSheet: View {
 
 // MARK: - Services / Cron / Files / Logs / Metrics / Deploy / Memory / Settings
 
+@MainActor
 struct ServicesView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -362,6 +369,7 @@ struct ServicesView: View {
     }
 }
 
+@MainActor
 struct CronJobsView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -393,6 +401,7 @@ struct CronJobsView: View {
     }
 }
 
+@MainActor
 struct FilesView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -527,6 +536,7 @@ struct FilesView: View {
     }
 }
 
+@MainActor
 struct LogsView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -623,6 +633,7 @@ struct LogsView: View {
     }
 }
 
+@MainActor
 struct DeploymentsView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -744,6 +755,7 @@ struct DeploymentsView: View {
     }
 }
 
+@MainActor
 struct MemoryView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -872,6 +884,7 @@ struct MemoryView: View {
     }
 }
 
+@MainActor
 struct TunnelsView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
@@ -941,6 +954,7 @@ struct TunnelsView: View {
     }
 }
 
+@MainActor
 struct SettingsView: View {
     @AppStorage("parevo.autoRefresh") private var autoRefresh = true
     @AppStorage("parevo.refreshInterval") private var refreshInterval = 15.0

@@ -2,6 +2,7 @@ import SwiftUI
 import Charts
 import SwiftData
 
+@MainActor
 struct DashboardView: View {
     @Environment(AppSession.self) private var session
     @Environment(AlertMonitor.self) private var alertMonitor

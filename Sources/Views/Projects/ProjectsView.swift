@@ -3,6 +3,7 @@ import SwiftData
 
 // MARK: - Projects (list + detail)
 
+@MainActor
 struct ProjectsView: View {
     @Query private var projects: [Project]
     @Environment(\.modelContext) private var modelContext

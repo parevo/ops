@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 
+@MainActor
 struct ContainerQuickActionsSheet: View {
     let container: ContainerInfo
     @Environment(AppSession.self) private var session

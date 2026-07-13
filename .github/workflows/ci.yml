@@ -9,12 +9,27 @@ on:
 jobs:
   build:
     name: Build macOS
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app
+      - name: Select Xcode 16
+        run: |
+          for app in \
+            /Applications/Xcode_16.4.app \
+            /Applications/Xcode_16.3.app \
+            /Applications/Xcode_16.2.app \
+            /Applications/Xcode_16.1.app \
+            /Applications/Xcode_16.0.app \
+            /Applications/Xcode_16.app \
+            /Applications/Xcode.app
+          do
+            if [[ -d "$app" ]]; then
+              sudo xcode-select -s "$app"
+              break
+            fi
+          done
+          xcodebuild -version
 
       - name: Build Release
         run: |
@@ -25,6 +40,7 @@ jobs:
             -destination 'platform=macOS' \
             -derivedDataPath .build/ci-derived \
             CODE_SIGN_IDENTITY="-" \
+            ONLY_ACTIVE_ARCH=NO \
             build
 
       - name: Verify app bundle

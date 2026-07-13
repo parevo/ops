@@ -74,6 +74,7 @@ struct StatusBadge: View {
     }
 }
 
+@MainActor
 struct RequiresServerModifier: ViewModifier {
     let hasServer: Bool
 

@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 
+@MainActor
 public struct ContentView: View {
     @Query private var servers: [Server]
     @Environment(AppSession.self) private var session

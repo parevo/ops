@@ -17,6 +17,7 @@ struct CommandPaletteItem: Identifiable, Hashable {
     }
 }
 
+@MainActor
 struct CommandPaletteView: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]
