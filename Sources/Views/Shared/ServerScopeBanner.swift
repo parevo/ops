@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 /// Sidebar footer — active server is the primary label (customer switcher).
+@MainActor
 struct SidebarServerSwitcher: View {
     @Environment(AppSession.self) private var session
     @Query private var servers: [Server]

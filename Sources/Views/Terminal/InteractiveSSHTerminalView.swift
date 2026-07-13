@@ -4,6 +4,7 @@ import SwiftTerm
 
 /// Embeds a registry-backed SwiftTerm session so tab switches don't restart SSH.
 /// Each `tabID` maps to exactly one `LocalProcessTerminalView` — never shared.
+@MainActor
 struct InteractiveSSHTerminalView: NSViewRepresentable {
     let tabID: UUID
     let server: SSHConnectionInfo

@@ -23,9 +23,9 @@ jobs:
   release:
     name: Build & publish
     runs-on: macos-14
-    environment:
-      name: github-pages
-      url: https://parevo.github.io/ops/
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      tag: ${{ steps.ver.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
@@ -78,16 +78,36 @@ jobs:
             Site: https://parevo.github.io/ops/
 
             > Gatekeeper: unsigned/ad-hoc builds may require right-click → Open the first time.
-            > For seamless updates, configure Sparkle keys (`SPARKLE_PRIVATE_KEY` secret) and preferably Developer ID + notarization.
+
+      - name: Upload docs for Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-site
+          path: docs
+
+  pages:
+    name: Deploy GitHub Pages
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download docs
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-site
+          path: docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs
 
-      - name: Deploy GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4

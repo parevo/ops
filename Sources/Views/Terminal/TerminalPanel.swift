@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 /// Shared SwiftTerm workspace with tabs + optional split — used as full Terminal page and bottom panel.
+@MainActor
 struct TerminalWorkspace: View {
     var compact: Bool = false
 
@@ -160,12 +161,14 @@ private struct TerminalTabChip: View {
     }
 }
 
+@MainActor
 struct TerminalPanel: View {
     var body: some View {
         TerminalWorkspace(compact: true)
     }
 }
 
+@MainActor
 struct TerminalView: View {
     var body: some View {
         TerminalWorkspace(compact: false)

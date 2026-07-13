@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct AlertsView: View {
     @Environment(AlertMonitor.self) private var alerts
     @Environment(AppSession.self) private var session
