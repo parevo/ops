@@ -3,146 +3,700 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ops — macOS DevOps by Parevo Co.</title>
-  <meta name="description" content="Ops is a native macOS DevOps workspace: SSH, Docker, metrics, terminals, alerts — by Parevo Co." />
+  <title>Ops — Native macOS DevOps by Parevo Co.</title>
+  <meta name="description" content="Ops is a native macOS DevOps workspace by Parevo Co. SSH fleets, Docker, metrics, multi-tab terminals, alerts, and Sparkle auto-updates — in one app." />
+  <meta property="og:title" content="Ops — macOS DevOps by Parevo Co." />
+  <meta property="og:description" content="Native macOS workspace for servers, containers, metrics, and terminals." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://parevo.github.io/ops/" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg0: #0c0f0a;
-      --bg1: #141a12;
+      --ink: #e7f0dc;
+      --muted: #8d9a82;
+      --faint: #5c6756;
       --lime: #c8f542;
-      --lime-dim: #9bc22e;
-      --text: #e8efe0;
-      --muted: #8a9780;
-      --border: rgba(200, 245, 66, 0.18);
-      --card: rgba(20, 26, 18, 0.72);
+      --lime-bright: #d8ff5a;
+      --lime-deep: #8fb82a;
+      --soil: #080b07;
+      --moss: #10150e;
+      --leaf: #171e14;
+      --line: rgba(200, 245, 66, 0.16);
+      --line-strong: rgba(200, 245, 66, 0.32);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
+
     * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; }
+    html { scroll-behavior: smooth; }
     body {
-      font-family: "IBM Plex Sans", system-ui, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(1200px 600px at 70% -10%, rgba(200, 245, 66, 0.14), transparent 55%),
-        radial-gradient(900px 500px at -10% 80%, rgba(90, 140, 40, 0.18), transparent 50%),
-        linear-gradient(165deg, var(--bg0), var(--bg1) 55%, #0a0d08);
-      line-height: 1.5;
+      margin: 0;
+      color: var(--ink);
+      font-family: Manrope, sans-serif;
+      background: var(--soil);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
     }
-    .wrap {
-      max-width: 720px;
+    a { color: inherit; }
+    img, svg { display: block; max-width: 100%; }
+
+    .noise {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      overflow: clip;
+    }
+
+    /* —— Hero —— */
+    .hero {
+      min-height: 100svh;
+      display: grid;
+      align-content: end;
+      position: relative;
+      padding: 28px clamp(20px, 4vw, 48px) 0;
+      background:
+        radial-gradient(ellipse 80% 55% at 70% 15%, rgba(200, 245, 66, 0.18), transparent 60%),
+        radial-gradient(ellipse 50% 40% at 10% 90%, rgba(80, 110, 40, 0.22), transparent 55%),
+        linear-gradient(180deg, #0d120b 0%, var(--soil) 72%);
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200, 245, 66, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200, 245, 66, 0.04) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 20%, transparent 75%);
+      animation: gridDrift 28s linear infinite;
+    }
+    @keyframes gridDrift {
+      from { background-position: 0 0, 0 0; }
+      to { background-position: 64px 64px, 64px 64px; }
+    }
+
+    .hero-inner {
+      position: relative;
+      max-width: 1180px;
+      width: 100%;
       margin: 0 auto;
-      padding: 12vh 24px 64px;
+      display: grid;
+      gap: clamp(32px, 5vw, 56px);
+      padding-bottom: clamp(28px, 4vw, 48px);
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
     }
     .brand {
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.78rem;
       font-weight: 500;
-      font-size: 0.95rem;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--lime);
-      margin: 0 0 20px;
+      margin: 0;
+      opacity: 0;
+      animation: rise 0.9s var(--ease) 0.05s forwards;
     }
-    h1 {
-      font-size: clamp(2.6rem, 8vw, 4.2rem);
-      font-weight: 700;
-      letter-spacing: -0.04em;
-      line-height: 1.05;
-      margin: 0 0 16px;
-    }
-    .lede {
-      font-size: 1.15rem;
+    .nav-mini {
+      display: flex;
+      gap: 18px;
+      font-size: 0.9rem;
       color: var(--muted);
-      max-width: 34em;
-      margin: 0 0 36px;
+      opacity: 0;
+      animation: rise 0.9s var(--ease) 0.12s forwards;
+    }
+    .nav-mini a {
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    .nav-mini a:hover { color: var(--lime); }
+
+    .hero-copy h1 {
+      font-family: Syne, sans-serif;
+      font-weight: 800;
+      font-size: clamp(4.5rem, 16vw, 9.5rem);
+      letter-spacing: -0.07em;
+      line-height: 0.88;
+      margin: 0 0 18px;
+      opacity: 0;
+      animation: rise 1s var(--ease) 0.15s forwards;
+    }
+    .hero-copy .lede {
+      max-width: 34rem;
+      margin: 0 0 28px;
+      font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+      color: var(--muted);
+      opacity: 0;
+      animation: rise 1s var(--ease) 0.28s forwards;
     }
     .cta {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 48px;
+      opacity: 0;
+      animation: rise 1s var(--ease) 0.4s forwards;
     }
-    a.btn {
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 14px 22px;
-      border-radius: 10px;
+      justify-content: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 0 22px;
+      border-radius: 12px;
       text-decoration: none;
-      font-weight: 600;
-      font-size: 1rem;
-      transition: transform 0.15s ease, background 0.15s ease;
+      font-weight: 700;
+      font-size: 0.98rem;
+      transition: transform 0.2s var(--ease), background 0.2s ease, border-color 0.2s ease;
     }
-    a.btn:hover { transform: translateY(-1px); }
-    a.btn-primary {
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
       background: var(--lime);
-      color: #10140c;
+      color: #0d1209;
     }
-    a.btn-primary:hover { background: #d6ff5c; }
-    a.btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
+    .btn-primary:hover { background: var(--lime-bright); }
+    .btn-ghost {
+      border: 1px solid var(--line-strong);
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.02);
     }
-    a.btn-ghost:hover { border-color: var(--lime-dim); }
-    .meta {
-      font-size: 0.9rem;
+    .btn-ghost:hover { border-color: var(--lime); }
+
+    .hero-visual {
+      opacity: 0;
+      animation: rise 1.1s var(--ease) 0.5s forwards;
+      border: 1px solid var(--line);
+      border-radius: 18px 18px 0 0;
+      overflow: hidden;
+      background: linear-gradient(160deg, #1a2216, #0c100b 55%);
+      box-shadow: 0 -40px 80px rgba(0, 0, 0, 0.35);
+    }
+    .hero-visual svg { width: 100%; height: auto; }
+
+    /* —— Sections —— */
+    section {
+      padding: clamp(72px, 12vw, 120px) clamp(20px, 4vw, 48px);
+    }
+    .section-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--lime-deep);
+      margin: 0 0 14px;
+    }
+    .section-title {
+      font-family: Syne, sans-serif;
+      font-weight: 700;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin: 0 0 16px;
+      max-width: 14ch;
+    }
+    .section-lede {
+      margin: 0;
+      max-width: 40rem;
       color: var(--muted);
-      border-top: 1px solid var(--border);
-      padding-top: 28px;
+      font-size: 1.08rem;
     }
-    .meta code {
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 0.85em;
-      color: var(--lime-dim);
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
     }
-    .foot {
-      margin-top: 40px;
-      font-size: 0.85rem;
+    .reveal.in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Why */
+    .why {
+      background:
+        linear-gradient(180deg, var(--soil), var(--moss));
+      border-top: 1px solid var(--line);
+    }
+    .why-grid {
+      margin-top: 48px;
+      display: grid;
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+    .why-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 180px) 1fr;
+      gap: 24px;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .why-row h3 {
+      margin: 0;
+      font-family: Syne, sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .why-row p {
+      margin: 0;
       color: var(--muted);
+      max-width: 46rem;
     }
-    .foot a { color: var(--lime-dim); }
+    @media (max-width: 640px) {
+      .why-row { grid-template-columns: 1fr; gap: 8px; }
+    }
+
+    /* Capabilities */
+    .caps {
+      background: var(--moss);
+      border-top: 1px solid var(--line);
+    }
+    .cap-list {
+      margin-top: 56px;
+      display: grid;
+      gap: 56px;
+    }
+    .cap {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: clamp(24px, 5vw, 64px);
+      align-items: center;
+    }
+    .cap:nth-child(even) { direction: rtl; }
+    .cap:nth-child(even) > * { direction: ltr; }
+    @media (max-width: 860px) {
+      .cap, .cap:nth-child(even) {
+        grid-template-columns: 1fr;
+        direction: ltr;
+      }
+    }
+    .cap h3 {
+      font-family: Syne, sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.1rem);
+      letter-spacing: -0.03em;
+      margin: 0 0 12px;
+    }
+    .cap p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .cap-panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background:
+        linear-gradient(145deg, rgba(200, 245, 66, 0.06), transparent 40%),
+        var(--leaf);
+      padding: 22px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: #b8c9a8;
+      min-height: 180px;
+    }
+    .cap-panel .ok { color: var(--lime); }
+    .cap-panel .dim { color: var(--faint); }
+    .cap-panel .warn { color: #e0b35a; }
+
+    /* Install */
+    .install {
+      background:
+        radial-gradient(ellipse 60% 50% at 100% 0%, rgba(200, 245, 66, 0.08), transparent 50%),
+        var(--soil);
+      border-top: 1px solid var(--line);
+    }
+    .steps {
+      margin-top: 48px;
+      counter-reset: step;
+      display: grid;
+      gap: 0;
+      max-width: 720px;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 18px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .step::before {
+      counter-increment: step;
+      content: counter(step, decimal-leading-zero);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      color: var(--lime);
+      font-size: 0.95rem;
+      padding-top: 2px;
+    }
+    .step h3 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+    .step code {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.86em;
+      color: var(--lime-deep);
+    }
+
+    /* Open */
+    .open {
+      border-top: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--moss), #0a0e09);
+    }
+    .open-actions {
+      margin-top: 36px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .meta-line {
+      margin-top: 28px;
+      color: var(--faint);
+      font-size: 0.92rem;
+    }
+    .meta-line a { color: var(--lime-deep); }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 28px clamp(20px, 4vw, 48px) 40px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 28px;
+      justify-content: space-between;
+      color: var(--faint);
+      font-size: 0.88rem;
+      background: #070905;
+    }
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+    footer a:hover { color: var(--lime); }
+    .foot-links { display: flex; flex-wrap: wrap; gap: 18px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+      .reveal { opacity: 1; transform: none; }
+      .brand, .nav-mini, .hero-copy h1, .hero-copy .lede, .cta, .hero-visual { opacity: 1; }
+    }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <p class="brand">Parevo Co.</p>
-    <h1>Ops</h1>
-    <p class="lede">
-      Native macOS DevOps workspace — SSH fleets, Docker, metrics, terminals, and alerts in one place.
-    </p>
-    <div class="cta">
-      <a class="btn btn-primary" id="download" href="https://github.com/parevo/ops/releases/latest">
-        Download for macOS
-      </a>
-      <a class="btn btn-ghost" href="https://github.com/parevo/ops">
-        GitHub
-      </a>
-    </div>
-    <div class="meta">
-      <p>Requires macOS 14+. After download, open the DMG and drag <strong>Ops</strong> to Applications.</p>
-      <p>If Gatekeeper blocks the first launch: right-click the app → <strong>Open</strong>.</p>
-      <p>Auto-updates use Sparkle via <code>appcast.xml</code> once a signed release is published.</p>
-    </div>
-    <p class="foot">© Parevo Co. · <a href="https://parevo.github.io/ops/appcast.xml">appcast</a></p>
-  </main>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="shell">
+    <header class="hero">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <div class="brand-row">
+          <p class="brand">Parevo Co.</p>
+          <nav class="nav-mini" aria-label="Secondary">
+            <a href="#workspace">Workspace</a>
+            <a href="#install">Install</a>
+            <a href="https://github.com/parevo/ops">Source</a>
+          </nav>
+        </div>
+
+        <div class="hero-copy">
+          <h1>Ops</h1>
+          <p class="lede">
+            Native macOS DevOps workspace — SSH fleets, Docker, live metrics, multi-tab terminals, and alerts in one calm surface.
+          </p>
+          <div class="cta">
+            <a class="btn btn-primary" id="download" href="https://github.com/parevo/ops/releases/latest">
+              Download for macOS
+            </a>
+            <a class="btn btn-ghost" href="https://github.com/parevo/ops">
+              View on GitHub
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+          <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img">
+            <defs>
+              <linearGradient id="pane" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#1c2618"/>
+                <stop offset="100%" stop-color="#10150e"/>
+              </linearGradient>
+            </defs>
+            <rect width="1100" height="520" fill="#0c100b"/>
+            <!-- titlebar -->
+            <rect width="1100" height="36" fill="#141b12"/>
+            <circle cx="22" cy="18" r="5" fill="#3a4434"/>
+            <circle cx="40" cy="18" r="5" fill="#3a4434"/>
+            <circle cx="58" cy="18" r="5" fill="#3a4434"/>
+            <text x="550" y="22" text-anchor="middle" fill="#8d9a82" font-family="JetBrains Mono, monospace" font-size="12">Ops — production-eu</text>
+            <!-- sidebar -->
+            <rect x="0" y="36" width="200" height="484" fill="#121910"/>
+            <text x="24" y="72" fill="#c8f542" font-family="Syne, sans-serif" font-size="22" font-weight="700">Ops</text>
+            <text x="24" y="110" fill="#5c6756" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1">OVERVIEW</text>
+            <rect x="16" y="124" width="168" height="32" rx="8" fill="rgba(200,245,66,0.12)"/>
+            <text x="28" y="144" fill="#c8f542" font-family="Manrope, sans-serif" font-size="13">Dashboard</text>
+            <text x="28" y="180" fill="#8d9a82" font-family="Manrope, sans-serif" font-size="13">Metrics</text>
+            <text x="28" y="212" fill="#8d9a82" font-family="Manrope, sans-serif" font-size="13">Alerts</text>
+            <text x="24" y="258" fill="#5c6756" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1">DOCKER</text>
+            <text x="28" y="288" fill="#8d9a82" font-family="Manrope, sans-serif" font-size="13">Containers</text>
+            <text x="28" y="320" fill="#8d9a82" font-family="Manrope, sans-serif" font-size="13">Compose</text>
+            <text x="24" y="366" fill="#5c6756" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1">ACTIVE</text>
+            <text x="28" y="396" fill="#e7f0dc" font-family="Manrope, sans-serif" font-size="14" font-weight="700">edge-01</text>
+            <text x="28" y="416" fill="#8d9a82" font-family="JetBrains Mono, monospace" font-size="11">root@10.0.0.12</text>
+            <!-- main -->
+            <rect x="200" y="36" width="900" height="484" fill="url(#pane)"/>
+            <text x="232" y="88" fill="#e7f0dc" font-family="Syne, sans-serif" font-size="28" font-weight="700">Fleet health</text>
+            <text x="232" y="116" fill="#8d9a82" font-family="Manrope, sans-serif" font-size="14">Three hosts · refreshed 12s ago</text>
+            <!-- metric blocks -->
+            <rect x="232" y="148" width="200" height="110" rx="12" fill="#171e14" stroke="rgba(200,245,66,0.16)"/>
+            <text x="252" y="180" fill="#8d9a82" font-family="Manrope, sans-serif" font-size="12">CPU</text>
+            <text x="252" y="220" fill="#c8f542" font-family="Syne, sans-serif" font-size="36" font-weight="700">24%</text>
+            <rect x="452" y="148" width="200" height="110" rx="12" fill="#171e14" stroke="rgba(200,245,66,0.16)"/>
+            <text x="472" y="180" fill="#8d9a82" font-family="Manrope, sans-serif" font-size="12">RAM</text>
+            <text x="472" y="220" fill="#e7f0dc" font-family="Syne, sans-serif" font-size="36" font-weight="700">61%</text>
+            <rect x="672" y="148" width="200" height="110" rx="12" fill="#171e14" stroke="rgba(200,245,66,0.16)"/>
+            <text x="692" y="180" fill="#8d9a82" font-family="Manrope, sans-serif" font-size="12">DISK</text>
+            <text x="692" y="220" fill="#e7f0dc" font-family="Syne, sans-serif" font-size="36" font-weight="700">43%</text>
+            <!-- chart -->
+            <path d="M232 360 C300 340, 340 300, 400 310 S500 380, 560 350 S660 280, 720 300 S820 360, 900 320" fill="none" stroke="#c8f542" stroke-width="2.5"/>
+            <path d="M232 360 C300 340, 340 300, 400 310 S500 380, 560 350 S660 280, 720 300 S820 360, 900 320 L900 420 L232 420 Z" fill="rgba(200,245,66,0.08)"/>
+            <!-- terminal strip -->
+            <rect x="232" y="440" width="668" height="56" rx="10" fill="#0a0e09" stroke="rgba(200,245,66,0.12)"/>
+            <text x="252" y="474" fill="#c8f542" font-family="JetBrains Mono, monospace" font-size="13">$</text>
+            <text x="270" y="474" fill="#b8c9a8" font-family="JetBrains Mono, monospace" font-size="13">docker compose ps — edge-01</text>
+            <rect x="860" y="462" width="8" height="16" fill="#c8f542">
+              <animate attributeName="opacity" values="1;0;1" dur="1.2s" repeatCount="indefinite"/>
+            </rect>
+          </svg>
+        </div>
+      </div>
+    </header>
+
+    <section class="why" id="why">
+      <div class="section-inner reveal">
+        <p class="eyebrow">Why Ops</p>
+        <h2 class="section-title">One host. One workspace.</h2>
+        <p class="section-lede">
+          Stop bouncing between Terminal, Docker Desktop, and random SSH tabs. Ops keeps fleet context, containers, and shells scoped to the server you’re on.
+        </p>
+        <div class="why-grid">
+          <div class="why-row">
+            <h3>Native macOS</h3>
+            <p>SwiftUI + SwiftData. No Electron shell — feels like a system app, with Keychain-backed credentials and hardened runtime.</p>
+          </div>
+          <div class="why-row">
+            <h3>Server-scoped</h3>
+            <p>Active host lives in the sidebar. Metrics, Docker, files, tunnels, and terminals all follow the server you selected.</p>
+          </div>
+          <div class="why-row">
+            <h3>Operator speed</h3>
+            <p>Command palette, multi-tab SSH with SwiftTerm, split panes, and alert actions that jump straight into htop or docker ps.</p>
+          </div>
+          <div class="why-row">
+            <h3>Quiet defaults</h3>
+            <p>Threshold alerts, memory of what you ran, and Sparkle updates — without turning your machine into a second monitoring stack.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="caps" id="workspace">
+      <div class="section-inner">
+        <div class="reveal">
+          <p class="eyebrow">Workspace</p>
+          <h2 class="section-title">Everything you’d open a shell for.</h2>
+          <p class="section-lede">
+            Built for people who live in production: inspect containers, watch fleets, tunnel ports, and keep a real PTY open.
+          </p>
+        </div>
+
+        <div class="cap-list">
+          <article class="cap reveal">
+            <div>
+              <h3>SSH that stays alive</h3>
+              <p>Multi-tab interactive shells over OpenSSH, optional password ASKPASS, split view, themes, and font size that actually apply to the live session — not a fake console.</p>
+            </div>
+            <div class="cap-panel" aria-hidden="true">
+              <div class="dim"># tab · edge-01 · shell</div>
+              <div><span class="ok">➜</span> ssh root@10.0.0.12</div>
+              <div class="dim">Welcome to Ubuntu 24.04 LTS</div>
+              <div><span class="ok">root@edge-01:~#</span> htop</div>
+              <div class="dim">PTY held across tab switches — no reconnect spam.</div>
+            </div>
+          </article>
+
+          <article class="cap reveal">
+            <div>
+              <h3>Docker without context loss</h3>
+              <p>Containers, images, volumes, networks, and Compose — inspected over SSH. Quick actions for exec, logs, and local port forwards tied to the active host.</p>
+            </div>
+            <div class="cap-panel" aria-hidden="true">
+              <div class="dim">docker ps — production-eu</div>
+              <div><span class="ok">api</span> &nbsp;&nbsp; Up 4d &nbsp;&nbsp; 0.0.0.0:8080→8080</div>
+              <div><span class="ok">worker</span> Up 4d</div>
+              <div><span class="warn">redis</span> &nbsp; Restarting</div>
+              <div class="dim">Inspect · Logs · Exec · Tunnel</div>
+            </div>
+          </article>
+
+          <article class="cap reveal">
+            <div>
+              <h3>Metrics &amp; alert center</h3>
+              <p>CPU, RAM, disk, and fleet cards. Breach thresholds fire macOS notifications; the Alert Center keeps history and one-click actions per host.</p>
+            </div>
+            <div class="cap-panel" aria-hidden="true">
+              <div class="dim">alert · ramHigh · edge-01</div>
+              <div><span class="warn">RAM 92%</span> crossed 85% threshold</div>
+              <div class="dim">cooldown 5m · notify + history</div>
+              <div><span class="ok">→</span> open htop &nbsp; <span class="ok">→</span> Metrics</div>
+            </div>
+          </article>
+
+          <article class="cap reveal">
+            <div>
+              <h3>Deploy, files, memory</h3>
+              <p>Deploy pipelines, remote file browse/save, systemd/cron views, and an audit-friendly memory of meaningful commands — noise filtered out.</p>
+            </div>
+            <div class="cap-panel" aria-hidden="true">
+              <div class="dim">memory · last meaningful actions</div>
+              <div>deploy api@edge-01 · success</div>
+              <div>edited /etc/nginx/sites-enabled/app</div>
+              <div>tunnel 5432 → db.internal:5432</div>
+              <div class="dim">internal metrics probes omitted</div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="install" id="install">
+      <div class="section-inner reveal">
+        <p class="eyebrow">Install</p>
+        <h2 class="section-title">From DMG to dock in a minute.</h2>
+        <p class="section-lede">
+          Requires macOS 14+. Builds ship as universal DMG/ZIP from GitHub Releases, with Sparkle checking this site for updates.
+        </p>
+        <div class="steps">
+          <div class="step">
+            <div>
+              <h3>Download the latest build</h3>
+              <p>Grab the <code>.dmg</code> (or <code>.zip</code>) from Releases. The button above always points at the newest asset.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div>
+              <h3>Open and install</h3>
+              <p>Mount the disk image and drag <strong>Ops</strong> into Applications.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div>
+              <h3>First launch on Gatekeeper</h3>
+              <p>Ad-hoc signed builds may need right-click → <strong>Open</strong> the first time. After that, Sparkle can keep you current.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div>
+              <h3>Add a server and go</h3>
+              <p>Key or password auth via Keychain. Pick the active host in the sidebar — every module follows.</p>
+            </div>
+          </div>
+        </div>
+        <div class="cta" style="margin-top: 36px;">
+          <a class="btn btn-primary" id="download-secondary" href="https://github.com/parevo/ops/releases/latest">Download Ops</a>
+          <a class="btn btn-ghost" href="https://github.com/parevo/ops/releases">All releases</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="open" id="open">
+      <div class="section-inner reveal">
+        <p class="eyebrow">Open &amp; updates</p>
+        <h2 class="section-title">Built in the open.</h2>
+        <p class="section-lede">
+          Source lives on GitHub. Releases publish signed Sparkle enclosures to <code style="font-family:JetBrains Mono,monospace;color:var(--lime-deep);font-size:0.9em">appcast.xml</code> so the app can update itself.
+        </p>
+        <div class="open-actions">
+          <a class="btn btn-ghost" href="https://github.com/parevo/ops">Repository</a>
+          <a class="btn btn-ghost" href="https://github.com/parevo/ops/issues">Issues</a>
+          <a class="btn btn-ghost" href="https://parevo.github.io/ops/appcast.xml">Appcast</a>
+        </div>
+        <p class="meta-line">Ops is a product of <strong style="color:var(--muted)">Parevo Co.</strong> · macOS 14+ · Bundle ID <code style="font-family:JetBrains Mono,monospace">com.parevo.ops</code></p>
+      </div>
+    </section>
+
+    <footer>
+      <div>© Parevo Co. · Ops</div>
+      <div class="foot-links">
+        <a href="https://github.com/parevo/ops">GitHub</a>
+        <a href="https://github.com/parevo/ops/releases">Releases</a>
+        <a href="https://parevo.github.io/ops/appcast.xml">Appcast</a>
+      </div>
+    </footer>
+  </div>
+
   <script>
-    // Prefer DMG asset from latest release when available
-    fetch('https://api.github.com/repos/parevo/ops/releases/latest')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (!data || !data.assets) return;
-        const dmg = data.assets.find(a => a.name.endsWith('.dmg'));
-        const zip = data.assets.find(a => a.name.endsWith('.zip'));
+    (function () {
+      const reveal = () => {
+        document.querySelectorAll('.reveal').forEach((el) => {
+          const rect = el.getBoundingClientRect();
+          if (rect.top < window.innerHeight * 0.88) el.classList.add('in');
+        });
+      };
+      reveal();
+      window.addEventListener('scroll', reveal, { passive: true });
+
+      const wireDownload = (el, data) => {
+        if (!el || !data || !data.assets) return;
+        const dmg = data.assets.find((a) => a.name.endsWith('.dmg'));
+        const zip = data.assets.find((a) => a.name.endsWith('.zip'));
         const asset = dmg || zip;
-        if (asset) {
-          const el = document.getElementById('download');
-          el.href = asset.browser_download_url;
-          el.textContent = 'Download ' + (data.tag_name || 'latest');
+        if (!asset) return;
+        el.href = asset.browser_download_url;
+        if (el.id === 'download') {
+          el.textContent = 'Download ' + (data.tag_name || 'Ops');
         }
-      })
-      .catch(() => {});
+      };
+
+      fetch('https://api.github.com/repos/parevo/ops/releases/latest')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          wireDownload(document.getElementById('download'), data);
+          wireDownload(document.getElementById('download-secondary'), data);
+        })
+        .catch(() => {});
+    })();
   </script>
 </body>
 </html>
