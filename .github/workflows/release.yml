@@ -116,3 +116,6 @@ jobs:
           git add docs/appcast.xml
           git commit -m "chore: publish Sparkle appcast for v${VERSION}"
           git push origin main
+
+          # pushes with GITHUB_TOKEN do not trigger other workflows — kick Pages explicitly
+          gh workflow run pages.yml --ref main
