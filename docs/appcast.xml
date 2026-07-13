@@ -6,16 +6,16 @@
     <description>Ops — native macOS DevOps workspace by Parevo Co.</description>
     <language>en</language>
     <item>
-      <title>Ops 1.0.2</title>
-      <pubDate>Mon, 13 Jul 2026 04:15:02 +0000</pubDate>
-      <sparkle:version>3</sparkle:version>
-      <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
+      <title>Ops 1.0.3</title>
+      <pubDate>Mon, 13 Jul 2026 04:22:00 +0000</pubDate>
+      <sparkle:version>4</sparkle:version>
+      <sparkle:shortVersionString>1.0.3</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <description><![CDATA[
-        <h2>Ops 1.0.2</h2>
+        <h2>Ops 1.0.3</h2>
         <p>Native macOS DevOps workspace — SSH, Docker, metrics, terminals, and more.</p>
       ]]></description>
-      <enclosure url="https://github.com/parevo/ops/releases/download/v1.0.2/Ops-1.0.2.zip" sparkle:edSignature="Tv9o9YcKLthH6QPNNxZibej1xW5h6G6xcbEPEBo1zLy5hsdGhPZv8BZN/mx1En8fXYL5afsEw90PmAwLgtx2CA==" length="7095495" type="application/octet-stream" />
+      <enclosure url="https://github.com/parevo/ops/releases/download/v1.0.3/Ops-1.0.3.zip" sparkle:edSignature="AEyt3QmUSTIhQZ1/9iZAyyAedPxPYy6BPfQ7Y/42r9g8kRhaWNwbaBxrJDgGy+yG+lBiK6JiHdBNM+uT9GORBA==" length="7098080" type="application/octet-stream" />
     </item>
   </channel>
 </rss>
