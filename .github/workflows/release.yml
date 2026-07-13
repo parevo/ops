@@ -14,6 +14,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  actions: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -91,8 +92,8 @@ jobs:
 
             > Gatekeeper: unsigned/ad-hoc builds may require right-click → Open the first time.
 
-      # Tag deploys to github-pages env are often blocked by protection rules.
-      # Commit appcast to main so the Pages workflow (on docs/**) can publish it.
+      # Keep appcast on main (source of truth). Token pushes do not start other workflows,
+      # so we also upload a Pages artifact and deploy from a main-ref job below.
       - name: Publish appcast on main
         env:
           VERSION: ${{ steps.ver.outputs.version }}
@@ -106,16 +107,58 @@ jobs:
             "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
             "$WORK/repo"
           cp "$APPCAST_SRC" "$WORK/repo/docs/appcast.xml"
+          # Keep site index/favicons from main; only appcast is release-owned
           cd "$WORK/repo"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --quiet -- docs/appcast.xml; then
             echo "appcast unchanged"
-            exit 0
+          else
+            git add docs/appcast.xml
+            git commit -m "chore: publish Sparkle appcast for v${VERSION}"
+            git push origin main
           fi
-          git add docs/appcast.xml
-          git commit -m "chore: publish Sparkle appcast for v${VERSION}"
-          git push origin main
 
-          # pushes with GITHUB_TOKEN do not trigger other workflows — kick Pages explicitly
-          gh workflow run pages.yml --ref main
+      - name: Upload docs for Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-site
+          path: docs
+
+  pages:
+    name: Deploy GitHub Pages
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Checkout main so the github-pages environment accepts the deployment
+      # (tag-triggered deploys are often blocked by branch protection rules).
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Overlay release appcast
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-site
+          path: /tmp/docs-site
+
+      - name: Merge appcast into site
+        run: |
+          cp /tmp/docs-site/appcast.xml docs/appcast.xml
+          ls -la docs/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
