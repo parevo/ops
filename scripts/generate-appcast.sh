@@ -40,8 +40,9 @@ if [[ -n "$KEY_FILE" ]]; then
     SIGN_UPDATE="$(find "$TOOLS" -type f -name sign_update | head -1)"
   fi
   if [[ -n "$SIGN_UPDATE" ]]; then
-    # sign_update prints: sparkle:edSignature="..." length="..."
-    ED_SIG="$("$SIGN_UPDATE" "$ZIP" "$KEY_FILE" | tr -d '\n')"
+    # Modern CLI: sign_update --ed-key-file <file> <archive>
+    # Output: sparkle:edSignature="..." length="..."
+    ED_SIG="$("$SIGN_UPDATE" --ed-key-file "$KEY_FILE" "$ZIP" | tr -d '\n')"
   fi
 fi
 
