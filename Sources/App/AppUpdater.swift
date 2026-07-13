@@ -6,7 +6,7 @@ import Sparkle
 final class AppUpdater: NSObject, SPUUpdaterDelegate {
     static let shared = AppUpdater()
 
-    static let feedURLString = "https://parevo.github.io/ops/appcast.xml"
+    nonisolated static let feedURLString = "https://parevo.github.io/ops/appcast.xml"
 
     private lazy var controller: SPUStandardUpdaterController = {
         SPUStandardUpdaterController(
