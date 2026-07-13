@@ -44,4 +44,4 @@ jobs:
             build
 
       - name: Verify app bundle
-        run: test -d .build/ci-derived/Build/Products/Release/ParevoOps.app
+        run: test -d .build/ci-derived/Build/Products/Release/Ops.app

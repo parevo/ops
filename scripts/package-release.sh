@@ -18,7 +18,7 @@ ENTITLEMENTS="$ROOT/signing/Ops-adhoc.entitlements"
 
 mkdir -p "$BUILD_DIR"
 
-echo "==> Building Release ParevoOps ${VERSION} (${BUILD_NUMBER})"
+echo "==> Building Release Ops ${VERSION} (${BUILD_NUMBER})"
 xcodebuild \
   -project ParevoOps.xcodeproj \
   -scheme ParevoOps \
@@ -30,15 +30,22 @@ xcodebuild \
   CODE_SIGN_IDENTITY="-" \
   build
 
-APP="$DERIVED/Build/Products/Release/ParevoOps.app"
+APP="$DERIVED/Build/Products/Release/Ops.app"
 if [[ ! -d "$APP" ]]; then
-  echo "error: ParevoOps.app not found at $APP" >&2
-  exit 1
+  # Backward-compatible fallback if PRODUCT_NAME was still ParevoOps
+  if [[ -d "$DERIVED/Build/Products/Release/ParevoOps.app" ]]; then
+    APP="$DERIVED/Build/Products/Release/ParevoOps.app"
+  else
+    echo "error: Ops.app not found under $DERIVED/Build/Products/Release" >&2
+    exit 1
+  fi
 fi
 
 STAGE="$BUILD_DIR/dmg-root"
 rm -rf "$STAGE"
 mkdir -p "$STAGE"
+# Always ship as Ops.app in the installer
+rm -rf "$STAGE/Ops.app"
 cp -R "$APP" "$STAGE/Ops.app"
 STAGED="$STAGE/Ops.app"
 
@@ -65,10 +72,15 @@ if [[ -d "$STAGED/Contents/Frameworks/Sparkle.framework" ]]; then
   resign_path "$SPARKLE"
 fi
 
+# Main executable may be Ops or legacy ParevoOps depending on PRODUCT_NAME
+MAIN_BIN="$STAGED/Contents/MacOS/Ops"
+if [[ ! -f "$MAIN_BIN" ]]; then
+  MAIN_BIN="$STAGED/Contents/MacOS/ParevoOps"
+fi
 codesign --force --sign - --timestamp=none \
   --entitlements "$ENTITLEMENTS" \
   --options runtime \
-  "$STAGED/Contents/MacOS/ParevoOps"
+  "$MAIN_BIN"
 
 codesign --force --sign - --timestamp=none \
   --entitlements "$ENTITLEMENTS" \
