@@ -20,6 +20,15 @@ macOS may prompt for Keychain access — allow it.
 
 4. Never commit `signing/ed25519-privkey.txt` or `*.pem` private material.
 
+## Ad-hoc distribution (current CI)
+
+CI signs with `CODE_SIGN_IDENTITY="-"` and `signing/Ops-adhoc.entitlements`
+(`com.apple.security.cs.disable-library-validation`). That is required so Sparkle’s
+Team ID does not crash the app under Hardened Runtime.
+
+When you move to **Developer ID + notarization**, remove that entitlement and sign
+the whole app (including Sparkle) with your Team ID instead.
+
 ## Gatekeeper / notarization (optional but recommended)
 
 Ad-hoc builds (`CODE_SIGN_IDENTITY="-"`) work for CI and testing, but users may need right-click → Open.
